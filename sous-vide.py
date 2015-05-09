@@ -39,9 +39,8 @@ class gpio():
         self.direction = direction
 
         sysfs_dir = "/sys/class/gpio/gpio{}".format(self.pin)
-        dir_file = open(os.path.join(sysfs_dir, "direction"), "w")
-        dir_file.write(direction)
-        dir_file.close()
+        with open(os.path.join(sysfs_dir, "direction"), "w") as dir_file:
+            dir_file.write(direction)
 
         value_path = os.path.join(sysfs_dir, "value")
         value_mode = "r+" if direction == "out" else "r"
@@ -78,10 +77,14 @@ class gpio():
 
 if __name__ == "__main__":
     print("hello")
-    pin = gpio(18)
+    pin = gpio(27)
     try:
         pin.set_direction("out")
         pin.set(True)
+        start_time = time.time()
+        pin.set(True)
+        elapsed = time.time() - start_time
+        print("elapsed: ", elapsed)
         print(pin.get())
         time.sleep(0.5)
         pin.set(False)
