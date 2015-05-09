@@ -32,7 +32,7 @@ class gpio():
         dir_file.close()
 
         value_path = os.path.join(sysfs_dir, "value")
-        value_mode = "w" if direction == "out" else "r"
+        value_mode = "r+" if direction == "out" else "r"
         self.__value_file__ = open(value_path, value_mode)
 
     def set(self, value):
@@ -42,6 +42,17 @@ class gpio():
             self.__value_file__.flush()
         else:
             print("Cannot set input pin ({})".format(self.pin))
+
+    def get(self):
+        self.__value_file__.seek(0)
+        value = self.__value_file__.read()
+        if value == "1\n":
+            return True
+        elif value == "0\n":
+            return False
+        else:
+            msg = "impossible value from {}".format(self.__value_file__.name)
+            raise ValueError(value, msg)
 
     def unexport(self):
         f = open("/sys/class/gpio/unexport", "w")
@@ -57,9 +68,11 @@ if __name__ == "__main__":
     print("hello")
     pin = gpio(18)
     try:
-        pin.set_direction("in")
+        pin.set_direction("out")
         pin.set(True)
+        print(pin.get())
         time.sleep(0.5)
         pin.set(False)
+        print(pin.get())
     finally:
         pin.close()
