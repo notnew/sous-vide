@@ -29,7 +29,7 @@ class gpio():
         try:
             self.set_direction(direction)
         except:
-            self.unexport()
+            self._unexport()
             raise
 
     def set_direction(self, direction):
@@ -66,14 +66,14 @@ class gpio():
             msg = "impossible value from {}".format(self.__value_file__.name)
             raise ValueError(value, msg)
 
-    def unexport(self):
+    def _unexport(self):
         f = open("/sys/class/gpio/unexport", "w")
         f.write(str(self.pin))
         f.close()
 
     def close(self):
         self.__value_file__.close()
-        self.unexport()
+        self._unexport()
 
 
 if __name__ == "__main__":
