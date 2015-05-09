@@ -8,9 +8,21 @@ class gpio():
     def __init__(self, pin, direction="in"):
         self.pin = int(pin)
 
-        f = open("/sys/class/gpio/export", "w")
-        f.write(str(self.pin))
-        f.close()
+        try:
+            f = open("/sys/class/gpio/export", "w")
+            f.write(str(self.pin))
+            f.close()
+        except IOError as err:
+            # if call writing the pin number to /sys/class/gpio/export fails
+            # with error "Device or resource busy" (errno 16) then the pin
+            # is already being used -- already exported or being used by device
+            # tree
+            # Fail, instead of trying to use it again
+            (errno, msg) = err.args
+            if errno == 16:
+                raise PinInUseException(self.pin) from err
+            raise
+
         # wait a bit so the sysfs files can be created and become writeable
         time.sleep(0.2)
 
