@@ -1,5 +1,5 @@
+from multiprocessing import Process, Queue
 import os
-import threading
 import time
 
 class PinInUseException(Exception):
@@ -113,24 +113,52 @@ class Cooker():
         self.blue = blue
 
         # set up heater controls
-        self.cycle_time = 10    # in seconds
-        self.heater_setting = 0
+        self.heat_cycle_q = Queue()
+        self.heater_setting_q = Queue()
+        self.heater_process = None
+
+    def set_heater(self, fraction):
+        """ set heater power to fraction, a value between 0 and 1 """
+        if fraction < 0 or fraction > 1:
+            err_msg = "heater power setting must be between 0 and 1"
+            raise ValueError(fraction, err_msg)
+        self.heater_setting_q.put(fraction)
+
+    def set_heat_cycle(self, seconds):
+        """ set duration of the heater cycle """
+        self.heat_cycle_q.put(seconds)
 
     def run_heater(self):
-        self.heater_thread = threading.Thread(target=self._heater)
-        self.heater_thread.start()
+        self.heater_process = Process(target=self._heater)
+        self.heater_process.start()
 
-    def _heater(self):
-        minimum_duration = 1    # don't switch relay for less than this time
+    def stop_heater(self):
+        self.relay.set(False)
+        if self.heater_process:
+            self.heater_process.terminate()
+
+    def _heater(self, cycle_time=10, heater_setting=0, minimum_duration=1):
+        """ run heater loop using time proportional output to power heater
+            cycle_time and minimum_duration are in seconds
+            heater_setting is fraction between 0 and 1 that gives the fraction
+            of the cycle_time the heater is powered
+            minimum_duration is a minimum duration before the relay switches
+        """
         while (True):
-            time_on = self.cycle_time * self.heater_setting
-            time_off = self.cycle_time - time_on
+            while self.heat_cycle_q.qsize():
+                cycle_time = self.heat_cycle_q.get()
+            while self.heater_setting_q.qsize():
+                heater_setting = self.heater_setting_q.get()
+
+            time_on =  cycle_time * heater_setting
+            time_off = cycle_time - time_on
+
             if time_on < minimum_duration:
                 self.relay.set(False)
-                time.sleep(self.cycle_time)
+                time.sleep(cycle_time)
             elif time_off < minimum_duration:
                 self.relay.set(True)
-                time.sleep(self.cycle_time)
+                time.sleep(cycle_time)
             else:
                 self.relay.set(True)
                 time.sleep(time_on)
@@ -149,7 +177,7 @@ if __name__ == "__main__":
     cooker = Cooker()
     pin = cooker.blue
     try:
-        cooker.heater_setting = 0.4
+        cooker.set_heater(0.3)
         cooker.run_heater()
         pin.set_direction("out")
         pin.set(True)
@@ -161,7 +189,10 @@ if __name__ == "__main__":
         time.sleep(0.5)
         pin.set(False)
         print(pin.get())
-        cooker.heater_setting = 0.9
+        cooker.set_heater(0.8)
+        cooker.set_heat_cycle(5)
+        # time.sleep(12)
+        # cooker.stop_heater()
         time.sleep(20)
     finally:
         cooker.close()
