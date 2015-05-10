@@ -43,26 +43,25 @@ class gpio():
             dir_file.write(direction)
 
         value_path = os.path.join(sysfs_dir, "value")
-        value_mode = "r+" if direction == "out" else "r"
-        self.__value_file__ = open(value_path, value_mode)
+        value_mode = os.O_RDWR if direction == "out" else os.O_RDONLY
+        self.__value_fd = os.open(value_path, value_mode)
 
     def set(self, value):
         if self.direction == "out":
-            self.__value_file__.seek(0)
-            self.__value_file__.write("1" if value else "0")
-            self.__value_file__.flush()
+            os.lseek(self.__value_fd, 0, os.SEEK_SET)
+            os.write(self.__value_fd, b"1" if value else b"0")
         else:
             print("Cannot set input pin ({})".format(self.pin))
 
     def get(self):
-        self.__value_file__.seek(0)
-        value = self.__value_file__.read()
-        if value == "1\n":
+        os.lseek(self.__value_fd, 0, os.SEEK_SET)
+        value = os.read(self.__value_fd, 1)
+        if value == b"1":
             return True
-        elif value == "0\n":
+        elif value == b"0":
             return False
         else:
-            msg = "impossible value from {}".format(self.__value_file__.name)
+            msg = "impossible value from pin {}".format(self.pin)
             raise ValueError(value, msg)
 
     def _unexport(self):
