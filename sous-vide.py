@@ -75,10 +75,52 @@ class gpio():
         finally:
             self._unexport()
 
+class Cooker():
+    def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22):
+        setup_err_msg = "Error setting up pin {} for {} output"
+        try:
+            relay = gpio(relay_pin, "out")
+        except:
+            print(setup_err_msg.format(relay_pin, "relay"))
+            raise
+        try:
+            red = gpio(red_pin, "out")
+        except:
+            print(setup_err_msg.format(red_pin, "red"))
+            relay.close()
+            raise
+        try:
+            green = gpio(green_pin, "out")
+        except:
+            print(setup_err_msg.format(green_pin, "green"))
+            relay.close()
+            red.close()
+            raise
+        try:
+            blue = gpio(blue_pin, "out")
+        except:
+            print(setup_err_msg.format(blue_pin, "blue"))
+            relay.close()
+            red.close()
+            green.close()
+            raise
+
+        self.relay = relay
+        self.red = red
+        self.green = green
+        self.blue = blue
+
+    def close(self):
+        self.relay.close()
+        self.red.close()
+        self.green.close()
+        self.blue.close()
+
 
 if __name__ == "__main__":
     print("hello")
-    pin = gpio(27)
+    cooker = Cooker()
+    pin = cooker.blue
     try:
         pin.set_direction("out")
         pin.set(True)
@@ -91,4 +133,4 @@ if __name__ == "__main__":
         pin.set(False)
         print(pin.get())
     finally:
-        pin.close()
+        cooker.close()
