@@ -71,8 +71,10 @@ class gpio():
         f.close()
 
     def close(self):
-        self.__value_file__.close()
-        self._unexport()
+        try:
+            os.close(self.__value_fd)
+        finally:
+            self._unexport()
 
 
 if __name__ == "__main__":
