@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 
 class PinInUseException(Exception):
@@ -115,7 +116,11 @@ class Cooker():
         self.cycle_time = 10    # in seconds
         self.heater_setting = 0
 
-    def heater(self):
+    def run_heater(self):
+        self.heater_thread = threading.Thread(target=self._heater)
+        self.heater_thread.start()
+
+    def _heater(self):
         minimum_duration = 1    # don't switch relay for less than this time
         while (True):
             time_on = self.cycle_time * self.heater_setting
@@ -145,7 +150,7 @@ if __name__ == "__main__":
     pin = cooker.blue
     try:
         cooker.heater_setting = 0.4
-        cooker.heater()
+        cooker.run_heater()
         pin.set_direction("out")
         pin.set(True)
         start_time = time.time()
@@ -156,5 +161,7 @@ if __name__ == "__main__":
         time.sleep(0.5)
         pin.set(False)
         print(pin.get())
+        cooker.heater_setting = 0.9
+        time.sleep(20)
     finally:
         cooker.close()
