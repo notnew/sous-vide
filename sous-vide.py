@@ -77,6 +77,7 @@ class gpio():
 
 class Cooker():
     def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22):
+        # setup up outputs
         setup_err_msg = "Error setting up pin {} for {} output"
         try:
             relay = gpio(relay_pin, "out")
@@ -110,6 +111,27 @@ class Cooker():
         self.green = green
         self.blue = blue
 
+        # set up heater controls
+        self.cycle_time = 10    # in seconds
+        self.heater_setting = 0
+
+    def heater(self):
+        minimum_duration = 1    # don't switch relay for less than this time
+        while (True):
+            time_on = self.cycle_time * self.heater_setting
+            time_off = self.cycle_time - time_on
+            if time_on < minimum_duration:
+                self.relay.set(False)
+                time.sleep(self.cycle_time)
+            elif time_off < minimum_duration:
+                self.relay.set(True)
+                time.sleep(self.cycle_time)
+            else:
+                self.relay.set(True)
+                time.sleep(time_on)
+                self.relay.set(False)
+                time.sleep(time_off)
+
     def close(self):
         self.relay.close()
         self.red.close()
@@ -122,6 +144,8 @@ if __name__ == "__main__":
     cooker = Cooker()
     pin = cooker.blue
     try:
+        cooker.heater_setting = 0.4
+        cooker.heater()
         pin.set_direction("out")
         pin.set(True)
         start_time = time.time()
