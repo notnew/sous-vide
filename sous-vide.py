@@ -1,80 +1,7 @@
+from gpio import gpio
+
 from multiprocessing import Process, Queue, Value
-import os
 import time
-
-class PinInUseException(Exception):
-    pass
-
-class gpio():
-    def __init__(self, pin, direction="in"):
-        self.pin = int(pin)
-
-        try:
-            f = open("/sys/class/gpio/export", "w")
-            f.write(str(self.pin))
-            f.close()
-        except IOError as err:
-            # if call writing the pin number to /sys/class/gpio/export fails
-            # with error "Device or resource busy" (errno 16) then the pin
-            # is already being used -- already exported or being used by device
-            # tree
-            # Fail, instead of trying to use it again
-            (errno, msg) = err.args
-            if errno == 16:
-                raise PinInUseException(self.pin) from err
-            raise
-
-        # wait a bit so the sysfs files can be created and become writeable
-        time.sleep(0.2)
-
-        try:
-            self.set_direction(direction)
-        except:
-            self._unexport()
-            raise
-
-    def set_direction(self, direction):
-        if direction != "in" and direction != "out":
-            msg = 'direction must be "in" or "out"'
-            raise ValueError(direction, msg)
-        self.direction = direction
-
-        sysfs_dir = "/sys/class/gpio/gpio{}".format(self.pin)
-        with open(os.path.join(sysfs_dir, "direction"), "w") as dir_file:
-            dir_file.write(direction)
-
-        value_path = os.path.join(sysfs_dir, "value")
-        value_mode = os.O_RDWR if direction == "out" else os.O_RDONLY
-        self.__value_fd = os.open(value_path, value_mode)
-
-    def set(self, value):
-        if self.direction == "out":
-            os.lseek(self.__value_fd, 0, os.SEEK_SET)
-            os.write(self.__value_fd, b"1" if value else b"0")
-        else:
-            print("Cannot set input pin ({})".format(self.pin))
-
-    def get(self):
-        os.lseek(self.__value_fd, 0, os.SEEK_SET)
-        value = os.read(self.__value_fd, 1)
-        if value == b"1":
-            return True
-        elif value == b"0":
-            return False
-        else:
-            msg = "impossible value from pin {}".format(self.pin)
-            raise ValueError(value, msg)
-
-    def _unexport(self):
-        f = open("/sys/class/gpio/unexport", "w")
-        f.write(str(self.pin))
-        f.close()
-
-    def close(self):
-        try:
-            os.close(self.__value_fd)
-        finally:
-            self._unexport()
 
 class Cooker():
     def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22):
@@ -176,44 +103,6 @@ class Cooker():
         self.red.close()
         self.green.close()
         self.blue.close()
-
-class DS18B20():
-    # static method and data
-    base_device_path = "/sys/bus/w1/devices/"
-    def list_devices():
-        devices = os.listdir(DS18B20.base_device_path)
-        return [d for d in devices if not d.startswith("w1_bus_master")]
-
-    def __init__(self, id=None):
-        self.id = id or DS18B20.list_devices()[0]
-        self.path = os.path.join(DS18B20.base_device_path, self.id, 'w1_slave')
-        self.file = open(self.path)
-        self.raw_data = None
-
-    def get_temp(self):
-        self.file.seek(0)
-        self.raw_data = self.file.read()
-
-        # get last column of second line (format is t=000000)
-        raw = self.raw_data.splitlines()[1]
-        raw = raw.split(" ")[-1]
-        assert(raw.startswith("t="))
-        raw = raw[2:]
-        raw = int(raw)
-
-        celsius = raw / 1000.0
-        fahrenheit = celsius * 9/5. + 32
-
-        self.raw = raw
-        self.celsius = celsius
-        self.fahrenheit = fahrenheit
-
-    def __str__(self):
-        if self.raw_data:
-            data = "{:10f}°F {:10f}°C".format(self.fahrenheit, self.celsius)
-        else:
-            data = "No Data"
-        return "<DS18B20 {}: {}>".format(self.id, data)
 
 if __name__ == "__main__":
     print("hello")
