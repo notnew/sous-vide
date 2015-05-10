@@ -128,8 +128,15 @@ class Cooker():
         """ set duration of the heater cycle """
         self.heat_cycle_q.put(seconds)
 
-    def run_heater(self):
-        self.heater_process = Process(target=self._heater)
+    def run_heater(self, **kwargs):
+        """ run heater loop using time proportional output to power heater
+            args include heater_setting, cycle_time, and minimum_duration
+            heater_setting is fraction between 0 and 1 that gives the fraction
+            of time the heater is powered
+            cycle_time and minimum_duration are in seconds
+            minimum_duration is a minimum duration before the relay switches
+        """
+        self.heater_process = Process(target=self._heater, kwargs=kwargs)
         self.heater_process.start()
 
     def stop_heater(self):
@@ -137,13 +144,7 @@ class Cooker():
         if self.heater_process:
             self.heater_process.terminate()
 
-    def _heater(self, cycle_time=10, heater_setting=0, minimum_duration=1):
-        """ run heater loop using time proportional output to power heater
-            cycle_time and minimum_duration are in seconds
-            heater_setting is fraction between 0 and 1 that gives the fraction
-            of the cycle_time the heater is powered
-            minimum_duration is a minimum duration before the relay switches
-        """
+    def _heater(self, heater_setting=0, cycle_time=10, minimum_duration=1):
         while (True):
             while self.heat_cycle_q.qsize():
                 cycle_time = self.heat_cycle_q.get()
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     pin = cooker.blue
     try:
         cooker.set_heater(0.3)
-        cooker.run_heater()
+        cooker.run_heater(heater_setting=0.7)
         pin.set_direction("out")
         pin.set(True)
         start_time = time.time()
