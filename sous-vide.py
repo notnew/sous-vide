@@ -6,38 +6,25 @@ import time
 class Cooker():
     def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22):
         # setup up outputs
-        setup_err_msg = "Error setting up pin {} for {} output"
+        self.__trying_pin = (0,"")
+        exported_pins = []
         try:
-            relay = gpio(relay_pin, "out")
-        except:
-            print(setup_err_msg.format(relay_pin, "relay"))
-            raise
-        try:
-            red = gpio(red_pin, "out")
-        except:
-            print(setup_err_msg.format(red_pin, "red"))
-            relay.close()
-            raise
-        try:
-            green = gpio(green_pin, "out")
-        except:
-            print(setup_err_msg.format(green_pin, "green"))
-            relay.close()
-            red.close()
-            raise
-        try:
-            blue = gpio(blue_pin, "out")
-        except:
-            print(setup_err_msg.format(blue_pin, "blue"))
-            relay.close()
-            red.close()
-            green.close()
-            raise
+            def setup_pin(num, name):
+                self.__trying_pin = (num, name)
+                pin =  gpio(num, "out")
+                self.__dict__[name] = pin
+                exported_pins.append(pin)
 
-        self.relay = relay
-        self.red = red
-        self.green = green
-        self.blue = blue
+            setup_pin(relay_pin, "relay")
+            setup_pin(red_pin,   "red")
+            setup_pin(green_pin, "green")
+            setup_pin(blue_pin,  "blue")
+        except:
+            for pin in exported_pins: # close opened pins
+                  pin.close()
+            err_msg = "Error setting up pin {} for {} output"
+            print(err_msg.format(*self.__trying_pin))
+            raise
 
         # set up heater controls
         self._heat_cycle = Value('d', 10)
