@@ -19,17 +19,20 @@ class Cooker():
             setup_pin(red_pin,   "red")
             setup_pin(green_pin, "green")
             setup_pin(blue_pin,  "blue")
+            self.__trying_pin = None
+
+            # set up heater controls
+            self._heat_cycle = Value('d', 10)
+            self._heater_setting = Value('d', 0.0)
+            self._heater_process = None
+
         except:
             for pin in exported_pins: # close opened pins
                   pin.close()
-            err_msg = "Error setting up pin {} for {} output"
-            print(err_msg.format(*self.__trying_pin))
+            if self.__trying_pin:
+                err_msg = "Error setting up pin {} for {} output"
+                print(err_msg.format(*self.__trying_pin))
             raise
-
-        # set up heater controls
-        self._heat_cycle = Value('d', 10)
-        self._heater_setting = Value('d', 0.0)
-        self._heater_process = None
 
     def set_heater(self, fraction):
         """ set heater power to fraction, a value between 0 and 1 """
