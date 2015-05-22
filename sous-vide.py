@@ -1,4 +1,5 @@
 from gpio import gpio
+import ds18b20.tracker
 
 from multiprocessing import Process, Queue, Value
 import time
@@ -25,6 +26,13 @@ class Cooker():
             self._heat_cycle = Value('d', 10)
             self._heater_setting = Value('d', 0.0)
             self._heater_process = None
+
+            self.sample_q = Queue()
+            self.minutes = ds18b20.tracker.History(10, 60)
+            histories = {"minutes": self.minutes}
+            self.tracker = ds18b20.tracker.Tracker(histories=histories,
+                                                   sample_q=self.sample_q)
+            self.tracker.start_sampler()
 
         except:
             for pin in exported_pins: # close opened pins
@@ -98,6 +106,7 @@ if __name__ == "__main__":
     print("hello")
     cooker = Cooker()
     pin = cooker.blue
+
     try:
         cooker.set_heater(0.3)
         cooker.run_heater(heater_setting=0.7)
@@ -116,5 +125,6 @@ if __name__ == "__main__":
         # time.sleep(12)
         # cooker.stop_heater()
         time.sleep(20)
+        print("minutes", cooker.tracker.histories['minutes'][:])
     finally:
         cooker.close()
