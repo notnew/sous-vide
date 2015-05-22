@@ -5,7 +5,8 @@ from multiprocessing import Process, Queue, Value
 import time
 
 class Cooker():
-    def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22):
+    def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22,
+                 target=78 ):
         # setup up outputs
         self.__trying_pin = (0,"")
         exported_pins = []
@@ -23,6 +24,7 @@ class Cooker():
             self.__trying_pin = None
 
             # set up heater controls
+            self.target = target
             self._heat_cycle = Value('d', 10)
             self._heater_setting = Value('d', 0.0)
             self._heater_process = None
@@ -55,6 +57,16 @@ class Cooker():
             err_msg = "heat_cycle must be a positive value"
             raise ValueError(seconds, err_msg)
         self._heat_cycle.value = seconds
+
+    def pid(self):
+        current_temp = self.tracker.latest.value
+        error = self.target - current_temp
+        # set heater to maximum if temperature is 2 degrees low or more
+        kp = 0.5 * error
+        heater = kp
+        heater = min( max(heater, 0.0), 1.0)
+        print("setting heater to", heater)
+        self.set_heater(heater)
 
     def run_heater(self, heater_setting=None, cycle_time=None, minimum_duration=1):
         """ run heater loop using time proportional output to power heater
@@ -96,6 +108,12 @@ class Cooker():
                 self.relay.set(False)
                 time.sleep(time_off)
 
+    def _watch_temperature(self):
+        while True:
+            new_temp = self.tracker.sample_q.get()
+            print("got new temperature reading:", new_temp)
+            self.pid()
+
     def close(self):
         self.relay.close()
         self.red.close()
@@ -108,23 +126,7 @@ if __name__ == "__main__":
     pin = cooker.blue
 
     try:
-        cooker.set_heater(0.3)
-        cooker.run_heater(heater_setting=0.7)
-        pin.set_direction("out")
-        pin.set(True)
-        start_time = time.time()
-        pin.set(True)
-        elapsed = time.time() - start_time
-        print("elapsed: ", elapsed)
-        print(pin.get())
-        time.sleep(0.5)
-        pin.set(False)
-        print(pin.get())
-        cooker.set_heater(0.8)
-        cooker.set_heat_cycle(5)
-        # time.sleep(12)
-        # cooker.stop_heater()
-        time.sleep(20)
-        print("minutes", cooker.tracker.histories['minutes'][:])
+        cooker.run_heater()
+        cooker._watch_temperature()
     finally:
         cooker.close()
