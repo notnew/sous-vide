@@ -29,7 +29,11 @@ class Cooker():
 
             # set up heater controls
             self.target = target
-            self._heat_cycle = Value('d', 10)
+            self.kp = 0.2       # max if error is 2 degrees low or more
+            self.ki = 0.02
+            self.offset = 0
+
+            self._heat_cycle = Value('d', 20)
             self._heater_setting = Value('d', 0.0)
             self._heater_process = None
 
@@ -65,11 +69,14 @@ class Cooker():
     def pid(self):
         current_temp = self.tracker.latest.value
         error = self.target - current_temp
-        # set heater to maximum if temperature is 2 degrees low or more
-        kp = 0.5 * error
-        heater = kp
+        p = self.kp * error
+        if abs(error) < 5:
+            self.offset += self.ki * error
+        else:
+            self.offset = 0
+        heater = self.kp + self.offset
         heater = min( max(heater, 0.0), 1.0)
-        print("setting heater to", heater)
+        print("setting heater to {} ({} + {})".format(heater, self.offset, p))
         flush()
         self.set_heater(heater)
 
