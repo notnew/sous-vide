@@ -3,6 +3,10 @@ import ds18b20.tracker
 
 from multiprocessing import Process, Queue, Value
 import time
+import sys
+
+def flush():
+    sys.stdout.flush()
 
 class Cooker():
     def __init__(self, relay_pin=17, red_pin=18, green_pin=27, blue_pin=22,
@@ -66,6 +70,7 @@ class Cooker():
         heater = kp
         heater = min( max(heater, 0.0), 1.0)
         print("setting heater to", heater)
+        flush()
         self.set_heater(heater)
 
     def run_heater(self, heater_setting=None, cycle_time=None, minimum_duration=1):
@@ -112,6 +117,7 @@ class Cooker():
         while True:
             new_temp = self.tracker.sample_q.get()
             print("got new temperature reading:", new_temp)
+            flush()
             self.pid()
 
     def close(self):
