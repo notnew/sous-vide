@@ -26,6 +26,12 @@ class Blinker():
         (self._hi_time, self._low_time) = (hi_time, low_time)
         self._messages.put( (hi_time, low_time) )
 
+    def set_on(self):
+        self.set_cycle(0)
+
+    def set_off(self):
+        self.set_cycle(-1)
+
     def run(self):
         def _run():
             (hi,low) = (self._hi_time, self._low_time)
@@ -66,9 +72,18 @@ class Blinker():
     def stop(self):
         if self.is_running():
             self._messages.put(None)
+            self._thread.join()
 
     def is_running(self):
         return self._thread and self._thread.is_alive()
+
+    def __enter__(self):
+        self.run()
+        return self
+
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        self.stop()
+        return False
 
 if __name__ == "__main__":
     (red,green,blue) = (18,27,22)
