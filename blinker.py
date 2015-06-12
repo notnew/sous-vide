@@ -1,6 +1,7 @@
 from gpio import gpio
 from threading import Thread
 import queue
+import time
 
 class Blinker():
     """ Blink an input pin on and off """
@@ -84,6 +85,37 @@ class Blinker():
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         self.stop()
         return False
+
+class SyncBlinker(Blinker):
+    """ Like blinker but new messages don't interrupt current cycle """
+    def run(self):
+        def _run():
+            (hi,low) = (self._hi_time, self._low_time)
+
+            with gpio(self.pin_num, "out") as pin:
+                while True:
+                    while self._messages.qsize() > 0:
+                        msg = self._messages.get()
+                        if msg is None:
+                            return
+                        (hi,low) = msg
+
+                    if hi < 0:     # off until new message arrives
+                        pin.set(False)
+                        (hi,low) = self._messages.get()
+                    elif hi == 0:   # on until new message arrives
+                        pin.set(True)
+                        (hi,low) = self._messages.get()
+                    else:
+                        pin.set(True)
+                        time.sleep(hi)
+                        pin.set(False)
+                        time.sleep(low)
+
+        if not self.is_running():
+            self._thread = Thread(target=_run)
+            self._thread.start()
+
 
 if __name__ == "__main__":
     (red,green,blue) = (18,27,22)
