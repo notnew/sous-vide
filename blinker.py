@@ -7,7 +7,7 @@ class Blinker():
     def __init__(self, pin_num):
         self.pin_num = pin_num
         self._messages = queue.Queue()
-        self.thread = None
+        self._thread = None
         self._hi_time = -1
         self._low_time = 0
 
@@ -59,12 +59,16 @@ class Blinker():
                 except StopIteration:
                     pass
 
-        self.thread = Thread(target=_run)
-        self.thread.start()
+        if not self.is_running():
+            self._thread = Thread(target=_run)
+            self._thread.start()
 
     def stop(self):
-        if self.thread and self.thread.is_alive():
+        if self.is_running():
             self._messages.put(None)
+
+    def is_running(self):
+        return self._thread and self._thread.is_alive()
 
 if __name__ == "__main__":
     (red,green,blue) = (18,27,22)
@@ -72,7 +76,7 @@ if __name__ == "__main__":
     blinker.run()
     blinker.set_cycle(0.9,0.1)
     try:
-        blinker.thread.join()
+        blinker._thread.join()
     except:
         print("stopping blinker")
         blinker.stop()
