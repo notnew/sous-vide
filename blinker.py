@@ -29,44 +29,35 @@ class Blinker():
     def run(self):
         def _run():
             (hi,low) = (self._hi_time, self._low_time)
-            def msg_or_timeout(duration):
+            def msg_or_timeout(duration=None):
                 try:
                     msg = self._messages.get(timeout=duration)
+                    if msg is None:
+                        raise StopIteration
                     return msg
                 except queue.Empty:
                     return (hi, low)
-                except KeyboardInterrupt:
-                    print("kb interrupt: reraising")
-                    raise
 
             with gpio(self.pin_num, "out") as pin:
-                while True:
-                    if hi < 0:     # off until new message arrives
-                        pin.set(False)
-                        msg = self._messages.get()
-                        if msg is None:
-                            break
-                        (hi,low) = msg
-                    elif hi == 0:   # on until new message arrives
-                        pin.set(True)
-                        msg = self._messages.get()
-                        if msg is None:
-                            break
-                        msg = self._messages.get()
-                    else:
-                        pin.set(True)
-                        msg  = msg_or_timeout(hi)
-                        if msg is None:
-                            break
-                        (hi,low) = msg
-                        if hi <= 0:
-                            continue
+                try:
+                    while True:
+                        if hi < 0:     # off until new message arrives
+                            pin.set(False)
+                            (hi,low) = msg_or_timeout()
+                        elif hi == 0:   # on until new message arrives
+                            pin.set(True)
+                            (hi,low) = msg_or_timeout()
+                        else:
+                            pin.set(True)
+                            (hi,low) = msg_or_timeout(hi)
+                            if hi <= 0:
+                                continue
 
-                        pin.set(False)
-                        msg = msg_or_timeout(low)
-                        if msg is None:
-                            break
-                        (hi,low) = msg
+                            pin.set(False)
+                            (hi,low) = msg_or_timeout(low)
+
+                except StopIteration:
+                    pass
 
         self.thread = Thread(target=_run)
         self.thread.start()
