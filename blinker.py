@@ -7,7 +7,6 @@ class Blinker():
     def __init__(self, pin_num):
         self.pin_num = pin_num
         self._messages = queue.Queue()
-        self.running = False
         self.thread = None
         self._hi_time = -1
         self._low_time = 0
@@ -29,19 +28,18 @@ class Blinker():
 
     def run(self):
         def _run():
-            self.running = True
-            pin = gpio(self.pin_num, "out")
-            try:
-                (hi,low) = (self._hi_time, self._low_time)
-                def msg_or_timeout(duration):
-                    try:
-                        msg = self._messages.get(timeout=duration)
-                        return msg
-                    except queue.Empty:
-                        return (hi, low)
-                    except KeyboardInterrupt:
-                        print("kb interrupt: reraising")
-                        raise
+            (hi,low) = (self._hi_time, self._low_time)
+            def msg_or_timeout(duration):
+                try:
+                    msg = self._messages.get(timeout=duration)
+                    return msg
+                except queue.Empty:
+                    return (hi, low)
+                except KeyboardInterrupt:
+                    print("kb interrupt: reraising")
+                    raise
+
+            with gpio(self.pin_num, "out") as pin:
                 while True:
                     if hi < 0:     # off until new message arrives
                         pin.set(False)
@@ -70,16 +68,11 @@ class Blinker():
                             break
                         (hi,low) = msg
 
-            finally:
-                self.running = False
-                pin.close()
-
-
         self.thread = Thread(target=_run)
         self.thread.start()
 
     def stop(self):
-        if self.running:
+        if self.thread and self.thread.is_alive():
             self._messages.put(None)
 
 if __name__ == "__main__":
