@@ -1,14 +1,14 @@
 from gpio import gpio
-from multiprocessing import Process, Queue
+from threading import Thread
 import queue
 
 class Blinker():
     """ Blink an input pin on and off """
     def __init__(self, pin_num):
         self.pin_num = pin_num
-        self._messages = Queue()
+        self._messages = queue.Queue()
         self.running = False
-        self.run_process = None
+        self.thread = None
         self._hi_time = -1
         self._low_time = 0
 
@@ -24,50 +24,71 @@ class Blinker():
                 low_time = hi_time
             if low_time <= 0:
                 raise ValueError(low_time, "low_time duration must be positive")
+        (self._hi_time, self._low_time) = (hi_time, low_time)
         self._messages.put( (hi_time, low_time) )
 
     def run(self):
-        def _safer_run():
-            self.pin = gpio(self.pin_num, "out")
-            try:
-                _run()
-            finally:
-                self.pin.close()
-
         def _run():
-            (hi,low) = (self._hi_time, self._low_time)
-            def msg_or_timeout(duration):
-                try:
-                    (new_hi, new_low) = self._messages.get(timeout=duration)
-                    return (new_hi, new_low)
-                except queue.Empty:
-                    return (hi, low)
-            while True:
-                if hi < 0:     # off until new message arrives
-                    self.pin.set(False)
-                    (hi,low) = self._messages.get()
-                elif hi == 0:   # on until new message arrives
-                    self.pin.set(True)
-                    (hi,low) = self._messages.get()
-                else:
-                    self.pin.set(True)
-                    (hi,low) = msg_or_timeout(hi)
-                    if hi <= 0:
-                        continue
-                    self.pin.set(False)
-                    (hi,low) = msg_or_timeout(low)
+            self.running = True
+            pin = gpio(self.pin_num, "out")
+            try:
+                (hi,low) = (self._hi_time, self._low_time)
+                def msg_or_timeout(duration):
+                    try:
+                        msg = self._messages.get(timeout=duration)
+                        return msg
+                    except queue.Empty:
+                        return (hi, low)
+                    except KeyboardInterrupt:
+                        print("kb interrupt: reraising")
+                        raise
+                while True:
+                    if hi < 0:     # off until new message arrives
+                        pin.set(False)
+                        msg = self._messages.get()
+                        if msg is None:
+                            break
+                        (hi,low) = msg
+                    elif hi == 0:   # on until new message arrives
+                        pin.set(True)
+                        msg = self._messages.get()
+                        if msg is None:
+                            break
+                        msg = self._messages.get()
+                    else:
+                        pin.set(True)
+                        msg  = msg_or_timeout(hi)
+                        if msg is None:
+                            break
+                        (hi,low) = msg
+                        if hi <= 0:
+                            continue
 
-        self.run_process = Process(target=_safer_run)
-        self.run_process.start()
-        self.running = True
+                        pin.set(False)
+                        msg = msg_or_timeout(low)
+                        if msg is None:
+                            break
+                        (hi,low) = msg
+
+            finally:
+                self.running = False
+                pin.close()
+
+
+        self.thread = Thread(target=_run)
+        self.thread.start()
 
     def stop(self):
         if self.running:
-            self.run_process.terminate()
-            self.running = False
+            self._messages.put(None)
 
 if __name__ == "__main__":
     (red,green,blue) = (18,27,22)
     blinker = Blinker(red)
     blinker.run()
     blinker.set_cycle(0.9,0.1)
+    try:
+        blinker.thread.join()
+    except:
+        print("stopping blinker")
+        blinker.stop()
