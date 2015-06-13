@@ -49,8 +49,8 @@ class Cooker():
         self.blue_pin = blue_pin
 
         # Cooker state variables
-        self.temperature = None
-        self.sample_time = 0
+        self.temperature = -1
+        self.sample_time = -1
         self.target = target
         self.heater_setting = 0
         self.kp = 0.2           # max if error is 2 degrees low or more
@@ -86,8 +86,7 @@ class Cooker():
         self.heater_setting = heater
         self.heater.set(heater)
 
-        print("got new sample ({:0.2f} seconds elapsed)".format(dt))
-        print(" ", self.get_state())
+        print(self, "\n")
         flush()
 
     def _sampler_is_running(self):
@@ -136,6 +135,22 @@ class Cooker():
         self.offset = float(data['offset'])
         self.kp = float(data['kp'])
         self.ki = float(data['ki'])
+
+    def __str__(self):
+        """ pretty print Cooker """
+        time_str = time.strftime("%H:%M:%S", time.localtime(self.sample_time))
+        header = "Cooker: ({}, {:0.2f} seconds ago):".format(
+            time_str, time.time() - self.sample_time)
+        temps = "  current: {:7.2f}  target: {:7.2f}  error: {:7.3f}".format(
+            self.temperature, self.target, self.target - self.temperature)
+        proportional = "proportional: {:6.2f}, kp: {:5.2f} ".format(
+            self.proportional, self.kp)
+        offset = "offset: {:12.2f}, ki: {:5.2f}".format(
+            self.offset, self.ki)
+        settings = "  setting: {:7.2f}% {:5.2f}\n    {}\n    {}".format(
+            self.heater_setting*100, self.heater_setting, proportional, offset)
+        return "\n".join([header, temps, settings])
+
 
 if __name__ == "__main__":
     print("hello")
