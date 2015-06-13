@@ -38,30 +38,39 @@ class Blinker():
             (hi,low) = (self._hi_time, self._low_time)
             def msg_or_timeout(duration=None):
                 try:
+                    start = time.time()
                     msg = self._messages.get(timeout=duration)
                     if msg is None:
                         raise StopIteration
-                    return msg
+                    elapsed = time.time() - start
+                    return (msg, elapsed)
                 except queue.Empty:
-                    return (hi, low)
+                    return ((hi, low), duration)
 
             with gpio(self.pin_num, "out") as pin:
                 try:
                     while True:
                         if hi < 0:     # off until new message arrives
                             pin.set(False)
-                            (hi,low) = msg_or_timeout()
+                            ((hi,low),_) = msg_or_timeout()
                         elif hi == 0:   # on until new message arrives
                             pin.set(True)
-                            (hi,low) = msg_or_timeout()
+                            ((hi,low),_) = msg_or_timeout()
                         else:
                             pin.set(True)
-                            (hi,low) = msg_or_timeout(hi)
+
+                            ((hi,low),elapsed) = msg_or_timeout(hi)
+                            while ( hi > 0 and hi > elapsed):
+                                ((hi,low),elapsed2) = msg_or_timeout(hi-elapsed)
+                                elapsed += elapsed2
                             if hi <= 0:
                                 continue
 
                             pin.set(False)
-                            (hi,low) = msg_or_timeout(low)
+                            ((hi,low), elapsed) = msg_or_timeout(low)
+                            while ( hi > 0 and low > 0 and low > elapsed):
+                                ((hi,low),elapsed2) = msg_or_timeout(low-elapsed)
+                                elapsed += elapsed2
 
                 except StopIteration:
                     pass
@@ -85,37 +94,6 @@ class Blinker():
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         self.stop()
         return False
-
-class SyncBlinker(Blinker):
-    """ Like blinker but new messages don't interrupt current cycle """
-    def run(self):
-        def _run():
-            (hi,low) = (self._hi_time, self._low_time)
-
-            with gpio(self.pin_num, "out") as pin:
-                while True:
-                    while self._messages.qsize() > 0:
-                        msg = self._messages.get()
-                        if msg is None:
-                            return
-                        (hi,low) = msg
-
-                    if hi < 0:     # off until new message arrives
-                        pin.set(False)
-                        (hi,low) = self._messages.get()
-                    elif hi == 0:   # on until new message arrives
-                        pin.set(True)
-                        (hi,low) = self._messages.get()
-                    else:
-                        pin.set(True)
-                        time.sleep(hi)
-                        pin.set(False)
-                        time.sleep(low)
-
-        if not self.is_running():
-            self._thread = Thread(target=_run)
-            self._thread.start()
-
 
 if __name__ == "__main__":
     (red,green,blue) = (18,27,22)

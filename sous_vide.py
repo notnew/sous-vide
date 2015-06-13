@@ -1,5 +1,5 @@
 from gpio import gpio
-from blinker import SyncBlinker
+from blinker import Blinker
 import ds18b20.tracker
 
 import queue
@@ -10,13 +10,13 @@ import time
 def flush():
     sys.stdout.flush()
 
-class Heater(SyncBlinker):
+class Heater(Blinker):
     def __init__(self, pin=17, cycle_time=20, minimum_duration=1):
         self.set_cycle_time(cycle_time)
         self.setting = 0
         self.minimum_duration = minimum_duration
 
-        SyncBlinker.__init__(self, pin)
+        super().__init__(pin)
 
     def set(self, fraction):
         """ set heater power to fraction, a value between 0 and 1 """
