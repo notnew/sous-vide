@@ -149,11 +149,11 @@ class Cooker():
             time_str, time.time() - self.sample_time)
         temps = "  current: {:7.2f}  target: {:7.2f}  error: {:7.3f}".format(
             self.temperature, self.target, self.target - self.temperature)
-        proportional = "proportional: {:6.2f}, kp: {:5.2f} ".format(
+        proportional = "proportional: {:8.4f}, kp: {:7.5f} ".format(
             self.proportional, self.kp)
-        offset = "offset: {:12.2f}, ki: {:5.2f}".format(
+        offset = "offset: {:14.4f}, ki: {:7.5f}".format(
             self.offset, self.ki)
-        settings = "  setting: {:7.2f}% {:5.2f}\n    {}\n    {}".format(
+        settings = "  setting: {:7.2f}% {:6.4f}\n    {}\n    {}".format(
             self.heater_setting*100, self.heater_setting, proportional, offset)
         return "\n".join([header, temps, settings])
 
