@@ -49,9 +49,10 @@ class Cooker():
 
         # set up heater controls
         self.target = target
-        self.kp = 0.2       # max if error is 2 degrees low or more
+        self.kp = 0.2           # max if error is 2 degrees low or more
+        self.proportional = 0
         self.ki = 0.004
-        self.offset = 0
+        self.offset = 0         # integral term
 
         self.heater = heater or Heater(relay_pin)
 
@@ -63,7 +64,7 @@ class Cooker():
         self.tracker.start_sampler()
 
     def pid(self):
-        current_temp = self.tracker.latest.value
+        current_temp = self.get_current()
         error = self.target - current_temp
         if abs(error) < 2:
             self.offset = max(self.offset + self.ki * error, 0)
@@ -85,6 +86,27 @@ class Cooker():
 
     def close(self):
         self.heater.stop()
+
+    def get_current(self):
+        return self.tracker.latest.value
+
+    def get_state(self):
+        """ return the current state of the Cooker as a dict """
+        return {'temperature': self.get_current(),
+                'target': self.target,
+                'proportional': self.proportional,
+                'integral': self.offset,
+                'kp': self.kp,
+                'ki': self.ki}
+
+    def set_state(self, data):
+        """ set the state of the Cooker to the values passed in a dict (of the
+            type returned by get_state) """
+        self.target = float(data['target'])
+        self.proportional = float(data['proportional'])
+        self.offset = float(data['integral'])
+        self.kp = float(data['kp'])
+        self.ki = float(data['ki'])
 
 if __name__ == "__main__":
     print("hello")
