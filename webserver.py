@@ -27,7 +27,7 @@ class RequestHandler (BaseHTTPRequestHandler):
 
     def send_state_json(self):
         state = self.server.cooker.get_state()
-        response = bytes(json.dumps(state), "utf-8")
+        response = bytes(json.dumps(state, indent=2), "utf-8")
         self.send_response(200, "ok")
         self.send_header("Content-Length", len(response))
         self.end_headers()
@@ -42,6 +42,7 @@ if __name__ == "__main__":
     server = WebServer()
     try:
         server.cooker.heater.run()
+        server.cooker.start_sampling()
         print("data:")
         print(server.cooker.get_state())
         print("starting server...")
