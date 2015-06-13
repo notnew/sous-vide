@@ -60,7 +60,7 @@ class Cooker():
 
         # Heater, temperature tracker, threads, etc
         self.heater = heater or Heater(relay_pin)
-        self._state_lock = threading.Lock()
+        self._state_lock = threading.RLock()
         self._sampler_thread = None
 
         self.sample_q = queue.Queue()
@@ -69,38 +69,43 @@ class Cooker():
         self.tracker = ds18b20.tracker.Tracker(histories=histories,
                                                sample_q=self.sample_q)
 
-    def pid(self, new_sample):
-        (sample_time, new_temp) = new_sample
-        error = self.target - new_temp
-        dt = sample_time - self.sample_time
-        self.temperature = new_temp
-        self.sample_time = sample_time
+    def control(self, new_sample=None):
+        """ control the heater using Cooker's state """
+        with self._state_lock as l:
+            if new_sample:
+                (sample_time, new_temp) = new_sample
+                dt = sample_time - self.sample_time
+                self.temperature = new_temp
+                self.sample_time = sample_time
+            else:
+                dt = 0
 
-        if abs(error) < 2:
-            self.offset = max(self.offset + self.ki * error, 0)
-        else:
-            self.offset = 0
-        self.proportional = self.kp * error
-        heater = self.proportional + self.offset
-        heater = min( max(heater, 0.0), 1.0)
-        self.heater_setting = heater
-        self.heater.set(heater)
+            error = self.target - self.temperature
+            if abs(error) < 2:
+                self.offset = max(self.offset + self.ki * error, 0)
+            else:
+                self.offset = 0
+            self.proportional = self.kp * error
+            heater = self.proportional + self.offset
+            heater = min( max(heater, 0.0), 1.0)
+            self.heater_setting = heater
+            self.heater.set(heater)
 
-        print(self, "\n")
-        flush()
+            print(self, "\n")
+            flush()
 
     def _sampler_is_running(self):
         return self._sampler_thread and self._sampler_thread.is_alive()
 
     def start_sampling(self):
         """ start a thread to get temperatures samples from Cooker.tracker
-            run self.pid() to update state when new temperatures arrive """
+            run self.control() to update state when new temperatures arrive """
 
         def _sample_temperature():
             self.tracker.start_sampler()
             try:
                 for new_sample in iter(self.sample_q.get, None):
-                    self.pid(new_sample)
+                    self.control(new_sample)
             finally:
                 self.tracker.stop_sampler()
 
@@ -135,6 +140,7 @@ class Cooker():
         self.offset = float(data['offset'])
         self.kp = float(data['kp'])
         self.ki = float(data['ki'])
+        self.control()
 
     def __str__(self):
         """ pretty print Cooker """

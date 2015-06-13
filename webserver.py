@@ -15,15 +15,16 @@ class RequestHandler (BaseHTTPRequestHandler):
 
     def do_POST(self):
         cooker = self.server.cooker
-        state = cooker.get_state()
+        with cooker._state_lock as l:
+            state = cooker.get_state()
 
-        content_len = int(self.headers.get('content-length', 0))
-        new_data = self.rfile.read(content_len)
-        for (k,[v]) in parse_qs(new_data).items():
-            state[str(k, "utf-8")] = float(v)
+            content_len = int(self.headers.get('content-length', 0))
+            new_data = self.rfile.read(content_len)
+            for (k,[v]) in parse_qs(new_data).items():
+                state[str(k, "utf-8")] = float(v)
 
-        cooker.set_state(state)
-        self.send_state_json()
+            cooker.set_state(state)
+            self.send_state_json()
 
     def send_state_json(self):
         state = self.server.cooker.get_state()
