@@ -48,35 +48,47 @@ class Cooker():
         self.green_pin = green_pin
         self.blue_pin = blue_pin
 
-        # set up heater controls
+        # Cooker state variables
+        self.temperature = None
+        self.sample_time = 0
         self.target = target
+        self.heater_setting = 0
         self.kp = 0.2           # max if error is 2 degrees low or more
         self.proportional = 0
         self.ki = 0.004
         self.offset = 0         # integral term
 
+        # Heater, temperature tracker, threads, etc
         self.heater = heater or Heater(relay_pin)
+        self._state_lock = threading.Lock()
+        self._sampler_thread = None
 
         self.sample_q = queue.Queue()
         self.minutes = ds18b20.tracker.History(10, 60)
         histories = {"minutes": self.minutes}
         self.tracker = ds18b20.tracker.Tracker(histories=histories,
                                                sample_q=self.sample_q)
-        self._sampler_thread = None
 
-    def pid(self):
-        current_temp = self.get_current()
-        error = self.target - current_temp
+    def pid(self, new_sample):
+        (sample_time, new_temp) = new_sample
+        error = self.target - new_temp
+        dt = sample_time - self.sample_time
+        self.temperature = new_temp
+        self.sample_time = sample_time
+
         if abs(error) < 2:
             self.offset = max(self.offset + self.ki * error, 0)
         else:
             self.offset = 0
-        p = self.kp * error
-        heater = p + self.offset
+        self.proportional = self.kp * error
+        heater = self.proportional + self.offset
         heater = min( max(heater, 0.0), 1.0)
-        print("setting heater to {} ({} + {})".format(heater, self.offset, p))
-        flush()
+        self.heater_setting = heater
         self.heater.set(heater)
+
+        print("got new sample ({:0.2f} seconds elapsed)".format(dt))
+        print(" ", self.get_state())
+        flush()
 
     def _sampler_is_running(self):
         return self._sampler_thread and self._sampler_thread.is_alive()
@@ -88,10 +100,8 @@ class Cooker():
         def _sample_temperature():
             self.tracker.start_sampler()
             try:
-                for new_temp in iter(self.sample_q.get, None):
-                    print("got new temperature reading:", new_temp)
-                    flush()
-                    self.pid()
+                for new_sample in iter(self.sample_q.get, None):
+                    self.pid(new_sample)
             finally:
                 self.tracker.stop_sampler()
 
@@ -107,15 +117,14 @@ class Cooker():
         self.heater.stop()
         self.stop_sampling()
 
-    def get_current(self):
-        return self.tracker.latest.value
-
     def get_state(self):
         """ return the current state of the Cooker as a dict """
-        return {'temperature': self.get_current(),
+        return {'sample_time': self.sample_time,
+                'temperature': self.temperature,
                 'target': self.target,
+                'setting': self.heater_setting,
                 'proportional': self.proportional,
-                'integral': self.offset,
+                'offset': self.offset,
                 'kp': self.kp,
                 'ki': self.ki}
 
@@ -124,7 +133,7 @@ class Cooker():
             type returned by get_state) """
         self.target = float(data['target'])
         self.proportional = float(data['proportional'])
-        self.offset = float(data['integral'])
+        self.offset = float(data['offset'])
         self.kp = float(data['kp'])
         self.ki = float(data['ki'])
 
