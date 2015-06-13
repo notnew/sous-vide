@@ -2,8 +2,9 @@ from gpio import gpio
 from blinker import SyncBlinker
 import ds18b20.tracker
 
-from multiprocessing import Process, Queue, Value
+import queue
 import sys
+import threading
 import time
 
 def flush():
@@ -56,12 +57,12 @@ class Cooker():
 
         self.heater = heater or Heater(relay_pin)
 
-        self.sample_q = Queue()
+        self.sample_q = queue.Queue()
         self.minutes = ds18b20.tracker.History(10, 60)
         histories = {"minutes": self.minutes}
         self.tracker = ds18b20.tracker.Tracker(histories=histories,
                                                sample_q=self.sample_q)
-        self.tracker.start_sampler()
+        self._sampler_thread = None
 
     def pid(self):
         current_temp = self.get_current()
@@ -77,15 +78,32 @@ class Cooker():
         flush()
         self.heater.set(heater)
 
-    def _watch_temperature(self):
-        while True:
-            new_temp = self.tracker.sample_q.get()
-            print("got new temperature reading:", new_temp)
-            flush()
-            self.pid()
+    def start_sampling(self):
+        """ start a thread to get temperatures samples from Cooker.tracker
+            run self.pid() to update state when new temperatures arrive """
+        def _sampler_is_running():
+            return self._sampler_thread and self._sampler_thread.is_alive()
+
+        def _sample_temperature():
+            self.tracker.start_sampler()
+            try:
+                for new_temp in iter(self.sample_q.get, None):
+                    print("got new temperature reading:", new_temp)
+                    flush()
+                    self.pid()
+            finally:
+                self.tracker.stop_sampler()
+
+        if not _sampler_is_running():
+            self._sampler_thread = threading.Thread(target=_sample_temperature)
+            self._sampler_thread.start()
+
+    def stop_sampling(self):
+        self.sample_q.put(None)
 
     def close(self):
         self.heater.stop()
+        self.stop_sampling()
 
     def get_current(self):
         return self.tracker.latest.value
@@ -114,6 +132,7 @@ if __name__ == "__main__":
 
     try:
         cooker.heater.run()
-        cooker._watch_temperature()
+        cooker.start_sampling()
+        cooker._sampler_thread.join()
     finally:
         cooker.close()
