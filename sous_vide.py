@@ -29,7 +29,7 @@ class Heater(SyncBlinker):
         if time_off < self.minimum_duration:
             self.set_on()
         elif time_on < self.minimum_duration:
-            self.setoff()
+            self.set_off()
         else:
             self.set_cycle(time_on, time_off)
 
@@ -78,11 +78,12 @@ class Cooker():
         flush()
         self.heater.set(heater)
 
+    def _sampler_is_running(self):
+        return self._sampler_thread and self._sampler_thread.is_alive()
+
     def start_sampling(self):
         """ start a thread to get temperatures samples from Cooker.tracker
             run self.pid() to update state when new temperatures arrive """
-        def _sampler_is_running():
-            return self._sampler_thread and self._sampler_thread.is_alive()
 
         def _sample_temperature():
             self.tracker.start_sampler()
@@ -94,12 +95,13 @@ class Cooker():
             finally:
                 self.tracker.stop_sampler()
 
-        if not _sampler_is_running():
+        if not self._sampler_is_running():
             self._sampler_thread = threading.Thread(target=_sample_temperature)
             self._sampler_thread.start()
 
     def stop_sampling(self):
-        self.sample_q.put(None)
+        if self._sampler_is_running():
+            self.sample_q.put(None)
 
     def close(self):
         self.heater.stop()
