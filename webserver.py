@@ -11,7 +11,12 @@ class WebServer(HTTPServer):
 
 class RequestHandler (BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_state_json()
+        if self.path == "/":
+            self.send_page()
+        elif self.path == "/state":
+            self.send_state_json()
+        else:
+            self.not_found()
 
     def do_POST(self):
         cooker = self.server.cooker
@@ -26,6 +31,14 @@ class RequestHandler (BaseHTTPRequestHandler):
             cooker.set_state(state)
             self.send_state_json()
 
+    def send_page(self):
+        with open("site/cooker.html", "r") as doc:
+            content = bytes(doc.read(), "utf-8")
+            self.send_response(200, "ok")
+            self.send_header("Content-Length", len(content))
+            self.end_headers()
+            self.wfile.write(content)
+
     def send_state_json(self):
         state = self.server.cooker.get_state()
         response = bytes(json.dumps(state, indent=2), "utf-8")
@@ -33,6 +46,10 @@ class RequestHandler (BaseHTTPRequestHandler):
         self.send_header("Content-Length", len(response))
         self.end_headers()
         self.wfile.write(response)
+
+    def not_found(self):
+        self.send_response(404, "Not Found")
+        self.end_headers()
 
     def bad_request(self):
         self.send_response(400, "Bad Request")
