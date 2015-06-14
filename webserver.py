@@ -11,10 +11,13 @@ class WebServer(HTTPServer):
 
 class RequestHandler (BaseHTTPRequestHandler):
     def do_GET(self):
+        allowed_files = ["style.css", "cooker.html"]
         if self.path == "/":
-            self.send_page()
+            self.send_page("cooker.html")
         elif self.path == "/state":
             self.send_state_json()
+        elif self.path[1:] in allowed_files:
+            self.send_page(self.path[1:])
         else:
             self.not_found()
 
@@ -25,14 +28,15 @@ class RequestHandler (BaseHTTPRequestHandler):
 
             content_len = int(self.headers.get('content-length', 0))
             new_data = self.rfile.read(content_len)
+            print("posted data:", new_data)
             for (k,[v]) in parse_qs(new_data).items():
                 state[str(k, "utf-8")] = float(v)
 
             cooker.set_state(state)
             self.send_state_json()
 
-    def send_page(self):
-        with open("site/cooker.html", "r") as doc:
+    def send_page(self, page="cooker.html"):
+        with open("site/" + page, "r") as doc:
             content = bytes(doc.read(), "utf-8")
             self.send_response(200, "ok")
             self.send_header("Content-Length", len(content))
