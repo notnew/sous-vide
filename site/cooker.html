@@ -5,5 +5,34 @@
   </head>
   <body>
     Sous Vide Controller
+
+    <div id="state"></div>
+    <label>Target:</label><input id="target" name="target" type="text" />
+    <button onclick="submitRequest('target')">Submit</button>
+    <p>
+    <div id="debug-wrapper">
+      Debug:
+      <div id="debug"> debug stuff here </div>
+    </div>
   </body>
+  <script type="text/javascript">
+    var myDIV = document.getElementById("debug");
+
+    var debug = function (value) {
+      myDIV.innerHTML = value;
+    };
+    debug("new debug text");
+
+    var submitRequest = function (name) {
+        debug("submitRequest button clicked for " + name);
+        var elem = document.getElementById(name);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/", true);
+        xhr.onload = function () {
+            debug("state: " + this.responseText);
+        };
+        xhr.send(elem.name + "=" + elem.value);
+    };
+
+  </script>
 </html>
