@@ -11,7 +11,7 @@ class WebServer(HTTPServer):
 
 class RequestHandler (BaseHTTPRequestHandler):
     def do_GET(self):
-        allowed_files = ["style.css", "cooker.html"]
+        allowed_files = ["cooker.html", "style/style.css", "js/cooker.js"]
         if self.path == "/":
             self.send_page("cooker.html")
         elif self.path == "/state":

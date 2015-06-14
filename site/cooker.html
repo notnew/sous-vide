@@ -1,38 +1,55 @@
 <!DOCTYPE html>
 <html>
+  <link rel="stylesheet" type="text/css" href="style/style.css" />
+  <script type="text/javascript" src="js/cooker.js"></script>
   <head>
     <title> Sous Vide Cooker Control</title>
   </head>
   <body>
     Sous Vide Controller
 
-    <div id="state"></div>
-    <label>Target:</label><input id="target" name="target" type="text" />
-    <button onclick="submitRequest('target')">Submit</button>
+    <div id="state">
+      <div id="temperatures">
+        <label>current:</label>
+        <label id="temperature" class="value">33</label>
+
+        <label>target:</label>
+        <input id="target" name="target" type="number" value=65.34 />
+
+        <label>error:</label>
+        <label id="error" class="value narrow"></label>
+      </div>
+      <div id="controls">
+        <label>setting:</label>
+        <input id="setting" name="setting" type="number" value=95.34 />
+
+        <div id="tunings">
+          <div>
+            <label class="wide">proportional:</label>
+            <label id="proportional" class="value"></label>
+
+            <label class="narrow">kp:</label>
+            <input id="kp" name="kp" type="number" value=0.02 />
+          </div>
+          <div>
+            <label class="wide">offset:</label>
+            <input id="offset" class="value" type="number" value=95.34 />
+
+            <label class="narrow">ki:</label>
+            <input id="ki" name="ki" type="number" value=0.004 />
+          </div>
+        </div>
+      </div>
+    <button onclick="updateState()">Update</button>
+    </div>
     <p>
     <div id="debug-wrapper">
       Debug:
       <div id="debug"> debug stuff here </div>
     </div>
   </body>
-  <script type="text/javascript">
-    var myDIV = document.getElementById("debug");
-
-    var debug = function (value) {
-      myDIV.innerHTML = value;
-    };
-    debug("new debug text");
-
-    var submitRequest = function (name) {
-        debug("submitRequest button clicked for " + name);
-        var elem = document.getElementById(name);
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/", true);
-        xhr.onload = function () {
-            debug("state: " + this.responseText);
-        };
-        xhr.send(elem.name + "=" + elem.value);
-    };
-
+  <script>
+    debug("testing");
+    <!-- showStateVar("temperature", 235); -->
   </script>
 </html>
