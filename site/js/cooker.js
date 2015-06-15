@@ -31,19 +31,32 @@ var updateState = function () {
   var stateIFrame = document.getElementsByName("hidden_iframe")[0];
   stateIFrame.onload = function (ev) {
     var text = stateIFrame.contentDocument.body.innerText;
-    showState(text);
+    showState(JSON.parse(text));
   }
 }
 
-var showState = function (text) {
-  var stateJSON = JSON.parse(text);
+var showState = function (stateJSON) {
   stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
 
   var inputs = document.forms.state.elements;
   [].forEach.call(inputs, function (input) {
     if (input.id)
-      input.value = stateJSON[input.id].toFixed(4);
+      input.value = stateJSON[input.id].toFixed(3);
   });
   enableInputs();
 };
+
+
+var getState = function () {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/state", true);
+  xhr.onload = function () {
+    json = JSON.parse(this.responseText);
+    showState(json);
+  };
+  xhr.send("");
+}
+
+getState();
+var getStateInterval = setInterval("getState()", 30000);
 
