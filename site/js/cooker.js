@@ -1,5 +1,3 @@
-var settableVars = ["target", "offset", "kp", "ki"];
-
 var debug = function (value) {
   var myDIV = document.getElementById("debug");
   myDIV.innerHTML = value;
@@ -10,7 +8,7 @@ var disableInputs = function () {
   stateElem.classList.add("working");
 
   var disable = function (input) { input.readOnly = true; };
-  inputs = document.forms.state.elements;
+  var inputs = document.forms.state.elements;
   [].forEach.call(inputs, disable);
 }
 
@@ -23,56 +21,29 @@ var enableInputs = function () {
       input.readOnly = false;
   };
 
-  inputs = document.forms.state.elements;
+  var inputs = document.forms.state.elements;
   [].forEach.call(inputs, enable);
 }
 
 var updateState = function () {
-  var data = "";
-  var varCount = settableVars.length;
-  for (var i=0; i < varCount; i++) {
-    name = settableVars[i];
-    elem = document.getElementById(name);
-    if (!elem) continue;
-    if (elem.tagName.toLowerCase() == "input" && elem.value) {
-      var pair = elem.name + "=" + elem.value;
-      if (data)
-        pair = "&" + pair;
-      data += pair;
-    }
-  }
-
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "/", true);
-  xhr.onload = function () {
-    json = JSON.parse(this.responseText);
-    showState(this.responseText);
-    enableInputs();
-    debug("state: " + this.responseText);
-  };
-  xhr.send(data);
   disableInputs();
-};
+
+  var stateIFrame = document.getElementsByName("hidden_iframe")[0];
+  stateIFrame.onload = function (ev) {
+    var text = stateIFrame.contentDocument.body.innerText;
+    showState(text);
+  }
+}
 
 var showState = function (text) {
-  var showStateVar = function (varName, value) {
-    elem = document.getElementById(varName);
-    if (!elem) return;
-    if (elem.tagName.toLowerCase() == "input")
-      elem.value = value;
-    else
-      elem.innerHTML = value;
-  };
-
   var stateJSON = JSON.parse(text);
+  stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
 
-  var stateVars = settableVars.concat(["temperature", "setting", "proportional"]);
-  var varCount = stateVars.length;
-  for (var i=0; i < varCount; i++) {
-    name = stateVars[i];
-    showStateVar(name, stateJSON[name].toFixed(4));
-  }
-  var err = stateJSON['target'] - stateJSON['temperature'];
-  showStateVar('error', err.toFixed(3));
+  var inputs = document.forms.state.elements;
+  [].forEach.call(inputs, function (input) {
+    if (input.id)
+      input.value = stateJSON[input.id].toFixed(4);
+  });
+  enableInputs();
 };
 

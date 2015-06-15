@@ -6,7 +6,8 @@
   </head>
   <iframe name="hidden_iframe" class="hidden"> </iframe>
   <body>
-    <form id="state" method="post" target="hidden_iframe">
+    <form id="state" method="post" target="hidden_iframe"
+          onsubmit="updateState()">
       <label for="temperature">current:</label>
       <input id="temperature" readOnly></label>
 
@@ -36,7 +37,7 @@
       <input id="ki" name="ki" class="PI-control"
              type="number" step="0.001" min="0" max="0.5" />
 
-      <button onclick="updateState()">Update</button>
+      <button type="submit">Update</button>
     </div>
     <p>
     <div id="debug-wrapper">
