@@ -1,27 +1,25 @@
 <!DOCTYPE html>
 <html>
   <link rel="stylesheet" type="text/css" href="style/style.css" />
-  <script type="text/javascript" src="js/cooker.js"></script>
   <head>
     <title> Sous Vide Cooker Control</title>
   </head>
   <body>
-    Sous Vide Controller
 
     <div id="state">
       <div id="temperatures">
         <label>current:</label>
-        <label id="temperature" class="value">33</label>
+        <label id="temperature" class="value"></label>
 
         <label>target:</label>
-        <input id="target" name="target" type="number" value=65.34 />
+        <input id="target" name="target" type="number" />
 
         <label>error:</label>
         <label id="error" class="value narrow"></label>
       </div>
       <div id="controls">
         <label>setting:</label>
-        <input id="setting" name="setting" type="number" value=95.34 />
+        <input id="setting" name="setting" type="number" />
 
         <div id="tunings">
           <div>
@@ -29,14 +27,14 @@
             <label id="proportional" class="value"></label>
 
             <label class="narrow">kp:</label>
-            <input id="kp" name="kp" type="number" value=0.02 />
+            <input id="kp" name="kp" type="number" />
           </div>
           <div>
             <label class="wide">offset:</label>
-            <input id="offset" class="value" type="number" value=95.34 />
+            <input id="offset" name="offset" class="value" type="number" />
 
             <label class="narrow">ki:</label>
-            <input id="ki" name="ki" type="number" value=0.004 />
+            <input id="ki" name="ki" type="number" />
           </div>
         </div>
       </div>
@@ -48,8 +46,5 @@
       <div id="debug"> debug stuff here </div>
     </div>
   </body>
-  <script>
-    debug("testing");
-    <!-- showStateVar("temperature", 235); -->
-  </script>
+  <script type="text/javascript" src="js/cooker.js"></script>
 </html>

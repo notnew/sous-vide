@@ -11,10 +11,13 @@ var updateState = function () {
   for (var i=0; i < varCount; i++) {
     name = settableVars[i];
     elem = document.getElementById(name);
-    if (data)
-      data += "&" + name + "=" + elem.value;
-    else
-      data = name + "=" + elem.value;
+    if (!elem) continue;
+    if (elem.tagName.toLowerCase() == "input" && elem.value) {
+      var pair = elem.name + "=" + elem.value;
+      if (data)
+        pair = "&" + pair;
+      data += pair;
+    }
   }
 
   var xhr = new XMLHttpRequest();
@@ -30,12 +33,11 @@ var updateState = function () {
 var showState = function (text) {
   var showStateVar = function (varName, value) {
     elem = document.getElementById(varName);
-    if (elem) {
-      if (elem.value)
-        elem.value = value;
-      else
-        elem.innerHTML = value;
-    };
+    if (!elem) return;
+    if (elem.tagName.toLowerCase() == "input")
+      elem.value = value;
+    else
+      elem.innerHTML = value;
   };
 
   var stateJSON = JSON.parse(text);
