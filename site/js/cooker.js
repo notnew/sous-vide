@@ -5,6 +5,26 @@ var debug = function (value) {
   myDIV.innerHTML = value;
 };
 
+var disableInputs = function () {
+  var stateElem = document.getElementById("state");
+  stateElem.classList.add("working");
+
+  inputs = document.getElementsByTagName("input");
+  for (var i=0; i < inputs.length; i++) {
+    inputs[i].readOnly = true;
+  }
+}
+
+var enableInputs = function () {
+  var stateElem = document.getElementById("state");
+  stateElem.classList.remove("working");
+
+  inputs = document.getElementsByTagName("input");
+  for (var i=0; i < inputs.length; i++) {
+    inputs[i].readOnly = false;
+  }
+}
+
 var updateState = function () {
   var data = "";
   var varCount = settableVars.length;
@@ -25,9 +45,11 @@ var updateState = function () {
   xhr.onload = function () {
     json = JSON.parse(this.responseText);
     showState(this.responseText);
+    enableInputs();
     debug("state: " + this.responseText);
   };
   xhr.send(data);
+  disableInputs();
 };
 
 var showState = function (text) {
