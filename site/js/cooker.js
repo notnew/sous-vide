@@ -7,7 +7,10 @@ var disableInputs = function () {
   var stateElem = document.getElementById("state");
   stateElem.classList.add("working");
 
-  var disable = function (input) { input.readOnly = true; };
+  var disable = function (input) {
+    input.readOnly = true;
+    input.tabIndex = "-1";
+  };
   var inputs = document.forms.state.elements;
   [].forEach.call(inputs, disable);
 }
@@ -17,8 +20,10 @@ var enableInputs = function () {
   stateElem.classList.remove("working");
 
   var enable = function (input) {
-    if (input.classList.contains("PI-control"))
+    if (input.classList.contains("PI-control")) {
       input.readOnly = false;
+      input.tabIndex = "0";
+    }
   };
 
   var inputs = document.forms.state.elements;
@@ -57,6 +62,9 @@ var getState = function () {
   xhr.send("");
 }
 
+
+disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
+enableInputs();   // remove tabIndex from settable inputs
 getState();
 var getStateInterval = setInterval("getState()", 30000);
 
