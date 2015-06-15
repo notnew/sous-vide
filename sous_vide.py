@@ -136,7 +136,6 @@ class Cooker():
         """ set the state of the Cooker to the values passed in a dict (of the
             type returned by get_state) """
         self.target = float(data['target'])
-        self.proportional = float(data['proportional'])
         self.offset = float(data['offset'])
         self.kp = float(data['kp'])
         self.ki = float(data['ki'])

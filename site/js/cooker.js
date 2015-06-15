@@ -9,20 +9,22 @@ var disableInputs = function () {
   var stateElem = document.getElementById("state");
   stateElem.classList.add("working");
 
-  inputs = document.getElementsByTagName("input");
-  for (var i=0; i < inputs.length; i++) {
-    inputs[i].readOnly = true;
-  }
+  var disable = function (input) { input.readOnly = true; };
+  inputs = document.forms.state.elements;
+  [].forEach.call(inputs, disable);
 }
 
 var enableInputs = function () {
   var stateElem = document.getElementById("state");
   stateElem.classList.remove("working");
 
-  inputs = document.getElementsByTagName("input");
-  for (var i=0; i < inputs.length; i++) {
-    inputs[i].readOnly = false;
-  }
+  var enable = function (input) {
+    if (input.classList.contains("PI-control"))
+      input.readOnly = false;
+  };
+
+  inputs = document.forms.state.elements;
+  [].forEach.call(inputs, enable);
 }
 
 var updateState = function () {
