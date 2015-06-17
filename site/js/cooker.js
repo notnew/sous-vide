@@ -41,13 +41,15 @@ var updateState = function () {
 }
 
 var showState = function (stateJSON) {
+  var format = function (f) {
+    return (typeof(f) == "number") ? f.toFixed(3) : f;
+  };
+
   stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
 
-  var inputs = document.forms.state.elements;
-  [].forEach.call(inputs, function (input) {
-    if (input.id)
-      input.value = stateJSON[input.id].toFixed(3);
-  });
+  d3.selectAll("form#state>input")
+    .attr("value", function () {
+      return format(stateJSON[this.id]) });
   enableInputs();
 };
 
