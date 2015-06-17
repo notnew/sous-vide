@@ -51,17 +51,14 @@ var showState = function (stateJSON) {
   enableInputs();
 };
 
-
 var getState = function () {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "/state", true);
-  xhr.onload = function () {
-    json = JSON.parse(this.responseText);
-    showState(json);
-  };
-  xhr.send("");
-}
-
+  var url = "/state";
+  d3.json(url)
+    .on("load", showState)
+    .on("error", function (req) {
+      debug("xhr (for " + url + ") failed with status " + req.status);})
+    .get();
+};
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
 enableInputs();   // remove tabIndex from settable inputs
