@@ -15,30 +15,19 @@ var debugObj = function (obj) {
 }
 
 var disableInputs = function () {
-  var stateElem = document.getElementById("state");
-  stateElem.classList.add("working");
+  d3.select("#state").classed("working", true)
 
-  var disable = function (input) {
-    input.readOnly = true;
-    input.tabIndex = "-1";
-  };
-  var inputs = document.forms.state.elements;
-  [].forEach.call(inputs, disable);
+  d3.selectAll("#state>input")
+    .attr("readOnly", true)
+    .attr("tabIndex", -1);
 }
 
 var enableInputs = function () {
-  var stateElem = document.getElementById("state");
-  stateElem.classList.remove("working");
+  d3.selectAll("#state").classed("working", false)
 
-  var enable = function (input) {
-    if (input.classList.contains("PI-control")) {
-      input.readOnly = false;
-      input.tabIndex = "0";
-    }
-  };
-
-  var inputs = document.forms.state.elements;
-  [].forEach.call(inputs, enable);
+  d3.selectAll("#state>input.PI-control")
+    .attr("readOnly", null)
+    .attr("tabIndex", "0");
 }
 
 var updateState = function () {
@@ -58,7 +47,7 @@ var showState = function (stateJSON) {
 
   stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
 
-  d3.selectAll("form#state>input")
+  d3.selectAll("#state>input")
     .attr("value", function () {
       return format(stateJSON[this.id]) });
   enableInputs();
