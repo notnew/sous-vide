@@ -1,7 +1,18 @@
 var debug = function (value) {
-  var myDIV = document.getElementById("debug");
-  myDIV.innerHTML = value;
+  d3.select("#debug").html(value);
 };
+
+var debugObj = function (obj) {
+  try {
+    dbg = "";
+    for (x in obj) {
+      dbg += x + ": " + obj[x] + "<br>";
+    }
+    debug(dbg);
+  } catch (e) {
+    debug(e);
+  }
+}
 
 var disableInputs = function () {
   var stateElem = document.getElementById("state");
