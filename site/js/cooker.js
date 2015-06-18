@@ -33,11 +33,13 @@ var enableInputs = function () {
 var updateState = function () {
   disableInputs();
 
-  var stateIFrame = document.getElementsByName("hidden_iframe")[0];
-  stateIFrame.onload = function (ev) {
-    var text = stateIFrame.contentDocument.body.innerText;
-    showState(JSON.parse(text));
-  }
+  var pairs = [];
+  d3.selectAll("#state>input.PI-control").each(function () {
+    pairs.push(this.id + "=" + this.value); });
+
+  requestState().post(pairs.join("&"));
+
+  return false;
 }
 
 var showState = function (stateJSON) {
@@ -53,17 +55,16 @@ var showState = function (stateJSON) {
   enableInputs();
 };
 
-var getState = function () {
-  var url = "/state";
-  d3.json(url)
+var requestState = function (url) {
+  url = (url) ? url : "/state";
+  return d3.json(url)
     .on("load", showState)
     .on("error", function (req) {
-      debug("xhr (for " + url + ") failed with status " + req.status);})
-    .get();
+      debug("xhr (for " + url + ") failed with status " + req.status);});
 };
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
 enableInputs();   // remove tabIndex from settable inputs
-getState();
-var getStateInterval = setInterval("getState()", 30000);
+requestState().get();
+var getStateInterval = setInterval("requestState().get()", 30000);
 

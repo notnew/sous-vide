@@ -4,10 +4,8 @@
   <head>
     <title> Sous Vide Cooker Control</title>
   </head>
-  <iframe name="hidden_iframe" class="hidden"> </iframe>
   <body>
-    <form id="state" method="post" target="hidden_iframe"
-          onsubmit="updateState()">
+    <form id="state" onsubmit="updateState(); return false;" >
       <label for="temperature">current:</label>
       <input id="temperature" readOnly></label>
 
