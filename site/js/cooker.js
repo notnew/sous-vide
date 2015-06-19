@@ -50,7 +50,7 @@ var showState = function (stateJSON) {
   stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
 
   d3.selectAll("#state>input")
-    .attr("value", function () {
+    .property("value", function () {
       return format(stateJSON[this.id]) });
   enableInputs();
 };
