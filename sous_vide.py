@@ -1,6 +1,6 @@
 from gpio import gpio
 from blinker import Blinker
-import ds18b20.tracker
+import ds18b20.sample
 
 import queue
 import sys
@@ -58,16 +58,14 @@ class Cooker():
         self.ki = 0.004
         self.offset = 0         # integral term
 
-        # Heater, temperature tracker, threads, etc
+        # Heater, temperature sampler, threads, etc
         self.heater = heater or Heater(relay_pin)
         self._state_lock = threading.RLock()
         self._sampler_thread = None
 
         self.sample_q = queue.Queue()
-        self.minutes = ds18b20.tracker.History(10, 60)
-        histories = {"minutes": self.minutes}
-        self.tracker = ds18b20.tracker.Tracker(histories=histories,
-                                               sample_q=self.sample_q)
+        self.period = 10
+        self.sampler = ds18b20.sample.Sampler(self.period, self.sample_q)
 
     def control(self, new_sample=None):
         """ control the heater using Cooker's state """
@@ -91,6 +89,7 @@ class Cooker():
             self.heater_setting = heater
             self.heater.set(heater)
 
+            print("control was run")
             print(self, "\n")
             flush()
 
@@ -98,19 +97,18 @@ class Cooker():
         return self._sampler_thread and self._sampler_thread.is_alive()
 
     def start_sampling(self):
-        """ start a thread to get temperatures samples from Cooker.tracker
-            run self.control() to update state when new temperatures arrive """
-
-        def _sample_temperature():
-            self.tracker.start_sampler()
+        """ start getting new temperature samples, run self.control() to update
+            state when new temperatures arrive """
+        def _run_sampler():
+            self.sampler.run()
             try:
                 for new_sample in iter(self.sample_q.get, None):
                     self.control(new_sample)
             finally:
-                self.tracker.stop_sampler()
+                self.sampler.stop()
 
         if not self._sampler_is_running():
-            self._sampler_thread = threading.Thread(target=_sample_temperature)
+            self._sampler_thread = threading.Thread(target=_run_sampler)
             self._sampler_thread.start()
 
     def stop_sampling(self):
