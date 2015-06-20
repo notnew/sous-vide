@@ -25,6 +25,24 @@
     /* border:black; */
 }
 
+svg.history {
+    width: 95%;
+    height: 20%;
+    margin: 30px 0;
+}
+
+path.temperature {
+    stroke-width: 0.002;
+    stroke: red;
+    fill: none;
+}
+
+rect.border {
+    fill: none;
+    stroke-width: 0.005;
+    stroke: black;
+}
+
 .hidden
 {
     display: none;

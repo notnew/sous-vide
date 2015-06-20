@@ -63,8 +63,45 @@ var requestState = function (url) {
       debug("xhr (for " + url + ") failed with status " + req.status);});
 };
 
+var graph = function (url) {
+  var _graph = function (history) {
+    chart = d3.select("svg.history")
+      .datum( [[0, 0], [50, 50]])
+      .datum(history);
+
+    var sampleTime = function (state) { return state.sample_time * 1000 };
+
+    var start_time = sampleTime(history[0]);
+    var end_time = sampleTime(history[history.length - 1]);
+    var svg_width = chart.property("width").baseVal.value;
+    var svg_height = chart.attr("height");
+
+    debugObj(svg_width);
+    var timescale = d3.time.scale()
+        .range([0,1])
+        .domain([start_time, end_time]);
+
+    var tempscale = d3.scale.linear()
+        .range([0,1])
+        .domain([110, 70]);
+
+    temps = d3.svg.line()
+      .x( function(state) { return timescale(sampleTime(state)) })
+      .y( function(state) { return tempscale(state.temperature) });
+
+    chart.select("path.temperature")
+        .attr("d", temps);
+  }
+
+  requestState("/history")
+      .on("load", _graph)
+      .get();
+}
+
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
 enableInputs();   // remove tabIndex from settable inputs
 requestState().get();
 var getStateInterval = setInterval("requestState().get()", 30000);
+var graphInterval = setInterval("graph()", 60000);
 
+graph();
