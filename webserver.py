@@ -16,6 +16,8 @@ class RequestHandler (BaseHTTPRequestHandler):
             self.send_page("cooker.html")
         elif self.path == "/state":
             self.send_state_json()
+        elif self.path == "/history":
+            self.send_history_json()
         elif self.path[1:] in allowed_files:
             self.send_page(self.path[1:])
         else:
@@ -46,6 +48,14 @@ class RequestHandler (BaseHTTPRequestHandler):
     def send_state_json(self):
         state = self.server.cooker.get_state()
         response = bytes(json.dumps(state, indent=2), "utf-8")
+        self.send_response(200, "ok")
+        self.send_header("Content-Length", len(response))
+        self.end_headers()
+        self.wfile.write(response)
+
+    def send_history_json(self):
+        history = self.server.cooker.history
+        response = bytes(json.dumps(history, indent=2), "utf-8")
         self.send_response(200, "ok")
         self.send_header("Content-Length", len(response))
         self.end_headers()

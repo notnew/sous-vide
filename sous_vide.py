@@ -66,6 +66,7 @@ class Cooker():
         self.sample_q = queue.Queue()
         self.period = 10
         self.sampler = ds18b20.sample.Sampler(self.period, self.sample_q)
+        self.history = []       # list of cooker states
 
     def control(self, new_sample=None):
         """ control the heater using Cooker's state """
@@ -89,9 +90,12 @@ class Cooker():
             self.heater_setting = heater
             self.heater.set(heater)
 
-            print("control was run")
             print(self, "\n")
             flush()
+
+            state = self.get_state()
+            if (not self.history) or (state != self.history[-1]):
+                self.history.append(state)
 
     def _sampler_is_running(self):
         return self._sampler_thread and self._sampler_thread.is_alive()
