@@ -44,7 +44,7 @@ var updateState = function () {
 
 var showState = function (stateJSON) {
   var format = function (f) {
-    return (typeof(f) == "number") ? f.toFixed(3) : f;
+    return (typeof(f) === "number") ? f.toFixed(3) : f;
   };
 
   stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
