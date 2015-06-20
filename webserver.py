@@ -15,9 +15,9 @@ class RequestHandler (BaseHTTPRequestHandler):
         if self.path == "/":
             self.send_page("cooker.html")
         elif self.path == "/state":
-            self.send_state_json()
+            self.send_as_json(self.server.cooker.get_state())
         elif self.path == "/history":
-            self.send_history_json()
+            self.send_as_json(self.server.cooker.history)
         elif self.path[1:] in allowed_files:
             self.send_page(self.path[1:])
         else:
@@ -35,7 +35,7 @@ class RequestHandler (BaseHTTPRequestHandler):
                 state[str(k, "utf-8")] = float(v)
 
             cooker.set_state(state)
-            self.send_state_json()
+        self.send_as_json(self.server.cooker.get_state())
 
     def send_page(self, page="cooker.html"):
         with open("site/" + page, "r") as doc:
@@ -45,17 +45,8 @@ class RequestHandler (BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
 
-    def send_state_json(self):
-        state = self.server.cooker.get_state()
-        response = bytes(json.dumps(state, indent=2), "utf-8")
-        self.send_response(200, "ok")
-        self.send_header("Content-Length", len(response))
-        self.end_headers()
-        self.wfile.write(response)
-
-    def send_history_json(self):
-        history = self.server.cooker.history
-        response = bytes(json.dumps(history, indent=2), "utf-8")
+    def send_as_json(self, data):
+        response = bytes(json.dumps(data, indent=2), "utf-8")
         self.send_response(200, "ok")
         self.send_header("Content-Length", len(response))
         self.end_headers()
