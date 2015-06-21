@@ -74,15 +74,15 @@ var requestState = function (url) {
 var getHistory = function() {
   requestState("/history")
     .on("load", function (history) {
-      d3.select("svg.history").datum(history);
+      d3.select("#history").datum(history);
       graph();
     })
     .get();
 }
 
 var graph = function () {
-  var chart = d3.select("svg.history");
-  var history = chart.datum();
+  var graphs = d3.select("#history");
+  var history = graphs.datum();
 
   var sampleTime = function (sample) { return sample.sample_time * 1000 };
 
@@ -92,7 +92,12 @@ var graph = function () {
       .range([0,1])
       .domain([start_time, end_time]);
 
-  var timeline =   function (id, min, max) {
+  var timeline =   function (id) {
+    var min = d3.min(history, function (sample) { return sample[id]; });
+    var max = d3.max(history, function (sample) { return sample[id]; });
+    var range = max - min;
+    min = min - (0.05 * range);
+    max = max + (0.05 * range);
     var scale = d3.scale.linear().domain([max, min]);
     return d3.svg.line()
       .x( function(sample) { return timescale(sampleTime(sample)) })
@@ -100,13 +105,13 @@ var graph = function () {
         return scale(sample[id]) });
   }
 
-  chart.select("path.temperature")
+  graphs.select("#temperatures path.temperature")
         .attr("d", timeline('temperature', 70, 110));
 
-  chart.select("path.target")
+  graphs.select("#recent").select("path.target")
         .attr("d", timeline('target', 70, 110));
 
-  chart.select("path.heater")
+  graphs.select("#recent path.heater")
         .attr("d", timeline('setting', 0, 1));
 
 }

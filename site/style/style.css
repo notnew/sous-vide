@@ -25,12 +25,12 @@
     /* border:black; */
 }
 
-svg.history {
+#history > svg {
     height: 1%;
     margin: 10px 0;
 }
 
-svg.history path {
+#history>svg path {
     stroke-width: 0.002;
     fill: none;
 }
