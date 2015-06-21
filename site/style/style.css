@@ -32,7 +32,7 @@ svg.history {
 }
 
 path.temperature {
-    stroke-width: 0.002;
+    stroke-width: 0.004;
     stroke: red;
     fill: none;
 }
