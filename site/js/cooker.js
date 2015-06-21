@@ -92,16 +92,23 @@ var graph = function () {
       .range([0,1])
       .domain([start_time, end_time]);
 
-  var tempscale = d3.scale.linear()
-        .range([0,1])
-        .domain([110, 70]);
-
-  var temps = d3.svg.line()
-    .x( function(sample) { return timescale(sampleTime(sample)) })
-    .y( function(sample) { return tempscale(sample.temperature) });
+  var timeline =   function (id, min, max) {
+    var scale = d3.scale.linear().domain([max, min]);
+    return d3.svg.line()
+      .x( function(sample) { return timescale(sampleTime(sample)) })
+      .y( function(sample) {
+        return scale(sample[id]) });
+  }
 
   chart.select("path.temperature")
-        .attr("d", temps);
+        .attr("d", timeline('temperature', 70, 110));
+
+  chart.select("path.target")
+        .attr("d", timeline('target', 70, 110));
+
+  chart.select("path.heater")
+        .attr("d", timeline('setting', 0, 1));
+
 }
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)

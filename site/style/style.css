@@ -31,10 +31,22 @@ svg.history {
     margin: 30px 0;
 }
 
+svg.history path {
+    stroke-width: 0.002;
+    fill: none;
+}
+
 path.temperature {
     stroke-width: 0.004;
     stroke: red;
-    fill: none;
+}
+
+path.target {
+    stroke: green;
+}
+
+path.heater {
+    stroke: black
 }
 
 rect.border {
