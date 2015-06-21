@@ -1,6 +1,6 @@
 from gpio import gpio
 from blinker import Blinker
-import ds18b20.sample
+from ds18b20.sample import SmoothSampler
 
 import queue
 import sys
@@ -64,8 +64,8 @@ class Cooker():
         self._sampler_thread = None
 
         self.sample_q = queue.Queue()
-        self.period = 10
-        self.sampler = ds18b20.sample.Sampler(self.period, self.sample_q)
+        self.period = 30
+        self.sampler = SmoothSampler(3,self.period, self.sample_q)
         self.history = []       # list of cooker states
 
     def control(self, new_sample=None):
