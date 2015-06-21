@@ -1,6 +1,6 @@
 var debug = function (value) {
   d3.select("#debug").html(value);
-};
+}
 
 var debugObj = function (obj) {
   try {
@@ -54,14 +54,10 @@ var showState = function (stateJSON) {
       return format(stateJSON[this.id]) });
   enableInputs();
 
-  d3.select("svg.history")
-    .datum( function (history) {
-      history.push(stateJSON);
-      return history;
-    });
-
-  graph();
-};
+  var history = d3.select("#history").datum();
+  history.push(stateJSON);
+  setHistory(history);
+}
 
 var requestState = function (url) {
   url = (url) ? url : "/state";
@@ -69,22 +65,30 @@ var requestState = function (url) {
     .on("load", showState)
     .on("error", function (req) {
       debug("xhr (for " + url + ") failed with status " + req.status);});
-};
+}
 
 var getHistory = function() {
   requestState("/history")
-    .on("load", function (history) {
-      d3.select("#history").datum(history);
-      graph();
-    })
+    .on("load", setHistory)
     .get();
 }
 
-var graph = function () {
-  var graphs = d3.select("#history");
-  var history = graphs.datum();
+var setHistory = function(history) {
+  d3.select("#history")
+    .datum(history)
+    .select("path")
+    .each(graph);
 
+  var recent_history = history.slice(history.length - 60);
+  d3.selectAll("#history #recent path")
+    .datum(recent_history)
+    .each(graph);
+}
+
+var graph = function (history, i) {
+  var valueName = this.id;
   var sampleTime = function (sample) { return sample.sample_time * 1000 };
+  var getValue = function (sample) { return sample[valueName]; };
 
   var start_time = sampleTime(history[0]);
   var end_time = sampleTime(history[history.length - 1]);
@@ -92,28 +96,18 @@ var graph = function () {
       .range([0,1])
       .domain([start_time, end_time]);
 
-  var timeline =   function (id) {
-    var min = d3.min(history, function (sample) { return sample[id]; });
-    var max = d3.max(history, function (sample) { return sample[id]; });
-    var range = max - min;
-    min = min - (0.05 * range);
-    max = max + (0.05 * range);
-    var scale = d3.scale.linear().domain([max, min]);
-    return d3.svg.line()
+  var min = d3.min(history, getValue);
+  var max = d3.max(history, getValue);
+  var padding = (max - min) * 0.05;
+  var scale = d3.scale.linear().domain([max+padding, min-padding]);
+
+  var timeline = d3.svg.line()
       .x( function(sample) { return timescale(sampleTime(sample)) })
-      .y( function(sample) {
-        return scale(sample[id]) });
-  }
+      .y( function(sample) { return scale(getValue(sample)) });
 
-  graphs.select("#temperatures path.temperature")
-        .attr("d", timeline('temperature', 70, 110));
+  d3.select(this).attr("d", timeline)
 
-  graphs.select("#recent").select("path.target")
-        .attr("d", timeline('target', 70, 110));
-
-  graphs.select("#recent path.heater")
-        .attr("d", timeline('setting', 0, 1));
-
+  debug("graph called for: this.id: " + this.id);
 }
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
