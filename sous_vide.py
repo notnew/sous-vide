@@ -128,6 +128,7 @@ class Cooker():
         return {'sample_time': self.sample_time,
                 'temperature': self.temperature,
                 'target': self.target,
+                'error': self.target - self.temperature,
                 'setting': self.heater_setting,
                 'proportional': self.proportional,
                 'offset': self.offset,

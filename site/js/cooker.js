@@ -47,8 +47,6 @@ var showState = function (stateJSON) {
     return (typeof(f) === "number") ? f.toFixed(5) : f;
   };
 
-  stateJSON['error'] = stateJSON['target'] - stateJSON['temperature'];
-
   d3.selectAll("#state>input")
     .property("value", function () {
       return format(stateJSON[this.id]) });
