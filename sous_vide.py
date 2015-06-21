@@ -55,7 +55,7 @@ class Cooker():
         self.heater_setting = 0
         self.kp = 0.2           # max if error is 2 degrees low or more
         self.proportional = 0
-        self.ki = 0.004
+        self.ki = 0.01/60
         self.offset = 0         # integral term
 
         # Heater, temperature sampler, threads, etc
@@ -81,7 +81,7 @@ class Cooker():
 
             error = self.target - self.temperature
             if abs(error) < 2:
-                self.offset = max(self.offset + self.ki * error, 0)
+                self.offset = max(self.offset + self.ki * error * dt, 0)
             else:
                 self.offset = 0
             self.proportional = self.kp * error
