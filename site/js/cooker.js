@@ -53,6 +53,14 @@ var showState = function (stateJSON) {
     .property("value", function () {
       return format(stateJSON[this.id]) });
   enableInputs();
+
+  d3.select("svg.history")
+    .datum( function (history) {
+      history.push(stateJSON);
+      return history;
+    });
+
+  graph();
 };
 
 var requestState = function (url) {
@@ -63,45 +71,42 @@ var requestState = function (url) {
       debug("xhr (for " + url + ") failed with status " + req.status);});
 };
 
-var graph = function (url) {
-  var _graph = function (history) {
-    chart = d3.select("svg.history")
-      .datum( [[0, 0], [50, 50]])
-      .datum(history);
+var getHistory = function() {
+  requestState("/history")
+    .on("load", function (history) {
+      d3.select("svg.history").datum(history);
+      graph();
+    })
+    .get();
+}
 
-    var sampleTime = function (state) { return state.sample_time * 1000 };
+var graph = function () {
+  var chart = d3.select("svg.history");
+  var history = chart.datum();
 
-    var start_time = sampleTime(history[0]);
-    var end_time = sampleTime(history[history.length - 1]);
-    var svg_width = chart.property("width").baseVal.value;
-    var svg_height = chart.attr("height");
+  var sampleTime = function (sample) { return sample.sample_time * 1000 };
 
-    debugObj(svg_width);
-    var timescale = d3.time.scale()
-        .range([0,1])
-        .domain([start_time, end_time]);
+  var start_time = sampleTime(history[0]);
+  var end_time = sampleTime(history[history.length - 1]);
+  var timescale = d3.time.scale()
+      .range([0,1])
+      .domain([start_time, end_time]);
 
-    var tempscale = d3.scale.linear()
+  var tempscale = d3.scale.linear()
         .range([0,1])
         .domain([110, 70]);
 
-    temps = d3.svg.line()
-      .x( function(state) { return timescale(sampleTime(state)) })
-      .y( function(state) { return tempscale(state.temperature) });
+  var temps = d3.svg.line()
+    .x( function(sample) { return timescale(sampleTime(sample)) })
+    .y( function(sample) { return tempscale(sample.temperature) });
 
-    chart.select("path.temperature")
+  chart.select("path.temperature")
         .attr("d", temps);
-  }
-
-  requestState("/history")
-      .on("load", _graph)
-      .get();
 }
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)
 enableInputs();   // remove tabIndex from settable inputs
 requestState().get();
 var getStateInterval = setInterval("requestState().get()", 30000);
-var graphInterval = setInterval("graph()", 60000);
+getHistory();
 
-graph();
