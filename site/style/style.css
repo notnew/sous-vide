@@ -25,33 +25,39 @@
     /* border:black; */
 }
 
-#history > svg {
+#history svg {
     height: 1%;
     margin: 10px 0;
 }
 
-#history>svg path {
+#history svg {
     stroke-width: 0.002;
+    stroke: black;
     fill: none;
 }
 
-path.temperature {
-    stroke-width: 0.004;
+#history>svg path#temperature {
     stroke: red;
 }
 
-path.target {
-    stroke: green;
+#recent path#temperature {
+    stroke-width: 0.005;
+    stroke: red;
 }
 
-path.heater {
-    stroke: black
+#recent path#target {
+    stroke: green;
+    stroke-width: 0.005;
+}
+
+#recent path#setting {
+    stroke-width: 0.0075;
 }
 
 rect.border {
     fill: none;
-    stroke-width: 0.005;
-    stroke: black;
+    stroke-width: 0.001;
+    stroke: #555d;
 }
 
 .hidden
