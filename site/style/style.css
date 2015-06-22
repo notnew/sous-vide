@@ -52,6 +52,18 @@ path[name=temperature] {
 
 #recent path[name=setting] {
     stroke-width: 0.0075;
+    opacity: 0.5;;
+}
+
+#recent path[name=error] {
+    stroke-width: 0.0075;
+    stroke: red;
+    opacity: 0.5;
+}
+
+.axis .tick line {
+    stroke: #555;
+    opacity: 0.35;
 }
 
 .axis .tick text {
