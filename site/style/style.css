@@ -55,7 +55,7 @@ path[name=temperature] {
 }
 
 .axis .tick text {
-    font-size: 0.08px;
+    font-size: 8px;
     fill: black;
 }
 

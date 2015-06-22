@@ -112,14 +112,16 @@ var graph = function (history, i) {
 
   var axis = d3.svg.axis()
       .scale(timescale)
-      .innerTickSize(0.1);
+      .ticks(4)
+      .orient("top")
+      .tickSize(1,0);
 
   d3.select(this.parentNode).select(".axis")
     .attr("transform", "translate(0,1)")
     .call(axis)
    .selectAll("text")
-    .attr({"x": 0, "y": 0, "dy": 0.08, "dx": 0.15,
-           "transform": "scale(0.3,1)"});
+    .attr({"x": 0, "y": 0, "dy": 0, "dx": 0,
+           "transform": "scale(0.3,1) translate(0, 0.08) scale(0.01)"});
 
 }
 
