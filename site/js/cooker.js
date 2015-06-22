@@ -94,14 +94,26 @@ var graph = function (history, i) {
       .range([0,1])
       .domain([start_time, end_time]);
 
+  var scale;
   if (valueName === "setting") {
-    var scale = d3.scale.linear().range([1, 0]);
+    scale = d3.scale.linear().range([1, 0]);
   }
   else {
-    var min = d3.min(history, getValue);
-    var max = d3.max(history, getValue);
+    var min, max;
+    if (valueName === "error") {
+      min = d3.min(history, getValue);
+      max = d3.max(history, getValue);
+    }
+    else {
+      min = d3.min(history, function (sample) {
+        return Math.min(sample.temperature, sample.target); });
+      max = d3.max(history, function (sample) {
+        return Math.max(sample.temperature, sample.target); });
+    }
     var padding = (max - min) * 0.05;
-    var scale = d3.scale.linear().domain([max+padding, min-padding]);
+    scale = d3.scale.linear()
+      .domain([min-padding, max+padding])
+      .range([1,0]);
   }
 
   var timeline = d3.svg.line()
