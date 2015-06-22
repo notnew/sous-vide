@@ -74,11 +74,11 @@ var getHistory = function() {
 var setHistory = function(history) {
   d3.select("#history")
     .datum(history)
-    .select("#temperatures path")
+    .select("#temperatures path.lineGraph")
     .each(graph);
 
   var recent_history = history.slice(history.length - 60);
-  d3.selectAll("#history #recent path")
+  d3.selectAll("#history #recent path.lineGraph")
     .datum(recent_history)
     .each(graph);
 }
