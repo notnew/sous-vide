@@ -36,21 +36,21 @@
     fill: none;
 }
 
-#history>svg path#temperature {
+path[name=temperature] {
     stroke: red;
 }
 
-#recent path#temperature {
+#recent path[name=temperature] {
     stroke-width: 0.005;
     stroke: red;
 }
 
-#recent path#target {
+#recent path[name=target] {
     stroke: green;
     stroke-width: 0.005;
 }
 
-#recent path#setting {
+#recent path[name=setting] {
     stroke-width: 0.0075;
 }
 

@@ -84,7 +84,7 @@ var setHistory = function(history) {
 }
 
 var graph = function (history, i) {
-  var valueName = this.id;
+  var valueName = d3.select(this).attr("name");
   var sampleTime = function (sample) { return sample.sample_time * 1000 };
   var getValue = function (sample) { return sample[valueName]; };
 
