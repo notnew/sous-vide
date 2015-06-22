@@ -74,7 +74,7 @@ var getHistory = function() {
 var setHistory = function(history) {
   d3.select("#history")
     .datum(history)
-    .select("path")
+    .select("#temperatures path")
     .each(graph);
 
   var recent_history = history.slice(history.length - 60);
@@ -108,7 +108,19 @@ var graph = function (history, i) {
       .x( function(sample) { return timescale(sampleTime(sample)) })
       .y( function(sample) { return scale(getValue(sample)) });
 
-  d3.select(this).attr("d", timeline)
+  d3.select(this).attr("d", timeline);
+
+  var axis = d3.svg.axis()
+      .scale(timescale)
+      .innerTickSize(0.1);
+
+  d3.select(this.parentNode).select(".axis")
+    .attr("transform", "translate(0,1)")
+    .call(axis)
+   .selectAll("text")
+    .attr({"x": 0, "y": 0, "dy": 0.08, "dx": 0.15,
+           "transform": "scale(0.3,1)"});
+
 }
 
 disableInputs();  // set tabIndex=-1 for inputs (tab won't focus to input)

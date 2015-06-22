@@ -54,6 +54,11 @@ path[name=temperature] {
     stroke-width: 0.0075;
 }
 
+.axis .tick text {
+    font-size: 0.08px;
+    fill: black;
+}
+
 rect.border {
     fill: none;
     stroke-width: 0.001;
