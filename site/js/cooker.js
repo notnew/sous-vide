@@ -122,18 +122,31 @@ var graph = function (history, i) {
 
   d3.select(this).attr("d", timeline);
 
-  var axis = d3.svg.axis()
+  var xAxis = d3.svg.axis()
       .scale(timescale)
       .ticks(4)
       .orient("top")
       .tickSize(1,0);
 
-  d3.select(this.parentNode).select(".axis")
+  d3.select(this.parentNode).select(".xAxis")
     .attr("transform", "translate(0,1)")
-    .call(axis)
+    .call(xAxis)
    .selectAll("text")
     .attr({"x": 0, "y": 0, "dy": 0, "dx": 0,
            "transform": "scale(0.3,1) translate(0, 0.08) scale(0.01)"});
+
+  var yAxis = d3.svg.axis()
+      .scale(scale)
+      .ticks(4)
+      .orient("right")
+      .tickSize(-1,0);
+
+  d3.select(this.parentNode).select(".yAxis")
+    .attr("transform", "translate(1,0)")
+    .call(yAxis)
+   .selectAll("text")
+    .attr({"x": 0, "y": 0, "dy": 0, "dx": 2,
+           "transform": "scale(0.3,1) translate(0, 0) scale(0.01)"});
 
 }
 

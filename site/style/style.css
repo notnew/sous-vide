@@ -63,7 +63,11 @@ path[name=temperature] {
 
 .axis .tick line {
     stroke: #555;
-    opacity: 0.35;
+    opacity: 0.25;
+}
+
+.yAxis .tick line {
+    opacity: 0.45;
 }
 
 .axis .tick text {
