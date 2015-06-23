@@ -36,6 +36,10 @@
       <input id="ki" name="ki" class="PI-control"
              type="number" step="0.00001" min="0" />
 
+      <input id="mode" name="mode" class="PI-control"
+             type="button" value="manual"
+             onclick="toggleMode()" />
+
       <button type="submit">Update</button>
       <button onclick="requestState().get(); return false;" > Refresh </button>
     </form>

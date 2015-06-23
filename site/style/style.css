@@ -25,6 +25,12 @@
     /* border:black; */
 }
 
+#state #mode
+{
+    background-color: #ddd;
+    float: right;
+}
+
 #history svg {
     height: 1%;
     margin: 10px 0;

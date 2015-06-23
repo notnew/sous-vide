@@ -33,7 +33,10 @@ class RequestHandler (BaseHTTPRequestHandler):
             new_data = self.rfile.read(content_len)
             print("posted data:", new_data)
             for (k,[v]) in parse_qs(new_data).items():
-                state[str(k, "utf-8")] = float(v)
+                if k == b"mode":
+                    state[str(k, "utf-8")] = str(v, "utf-8")
+                else:
+                    state[str(k, "utf-8")] = float(v)
 
             cooker.set_state(state)
         self.send_as_json(self.server.cooker.get_state())

@@ -65,6 +65,16 @@ var requestState = function (url) {
       debug("xhr (for " + url + ") failed with status " + req.status);});
 }
 
+var toggleMode = function () {
+  var mode = d3.select("#mode");
+  if (mode.property("value") === "manual" )
+    mode.property("value", "auto");
+  else
+    mode.property("value", "manual");
+
+  updateState();
+}
+
 var getHistory = function() {
   requestState("/history")
     .on("load", setHistory)
