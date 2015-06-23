@@ -49,6 +49,7 @@ class Cooker():
         self.blue_pin = blue_pin
 
         # Cooker state variables
+        self.mode = "auto"
         self.temperature = -1
         self.sample_time = -1
         self.target = target
@@ -79,6 +80,24 @@ class Cooker():
             else:
                 dt = 0
 
+            # set the heater_settting to new value depending on mode
+            if self.mode == "manual":
+                self.heater_setting = self.offset
+            else:
+                self.pid(dt)
+
+            self.heater.set(self.heater_setting)
+
+            print(self, "\n")
+            flush()
+
+            state = self.get_state()
+            if (not self.history) or (state != self.history[-1]):
+                self.history.append(state)
+
+    def pid(self, dt=0):
+        """ control the heater using Cooker's state """
+        with self._state_lock as l:
             error = self.target - self.temperature
             if abs(error) < 2:
                 self.offset = max(self.offset + self.ki * error * dt, 0)
@@ -88,14 +107,6 @@ class Cooker():
             heater = self.proportional + self.offset
             heater = min( max(heater, 0.0), 1.0)
             self.heater_setting = heater
-            self.heater.set(heater)
-
-            print(self, "\n")
-            flush()
-
-            state = self.get_state()
-            if (not self.history) or (state != self.history[-1]):
-                self.history.append(state)
 
     def _sampler_is_running(self):
         return self._sampler_thread and self._sampler_thread.is_alive()
@@ -128,6 +139,7 @@ class Cooker():
         return {'sample_time': self.sample_time,
                 'temperature': self.temperature,
                 'target': self.target,
+                'mode': self.mode,
                 'error': self.target - self.temperature,
                 'setting': self.heater_setting,
                 'proportional': self.proportional,
@@ -139,6 +151,7 @@ class Cooker():
         """ set the state of the Cooker to the values passed in a dict (of the
             type returned by get_state) """
         self.target = float(data['target'])
+        self.mode = (data['mode'])
         self.offset = float(data['offset'])
         self.kp = float(data['kp'])
         self.ki = float(data['ki'])
@@ -147,8 +160,8 @@ class Cooker():
     def __str__(self):
         """ pretty print Cooker """
         time_str = time.strftime("%H:%M:%S", time.localtime(self.sample_time))
-        header = "Cooker: ({}, {:0.2f} seconds ago):".format(
-            time_str, time.time() - self.sample_time)
+        header = "Cooker: <{}>({}, {:0.2f} seconds ago):".format(
+            self.mode, time_str, time.time() - self.sample_time)
         temps = "  current: {:7.2f}  target: {:7.2f}  error: {:7.3f}".format(
             self.temperature, self.target, self.target - self.temperature)
         proportional = "proportional: {:8.4f}, kp: {:7.5f} ".format(
